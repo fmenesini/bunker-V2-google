@@ -1,0 +1,25 @@
+# Escludi file di sistema e di configurazione locale
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.vscode/
+.idea/
+.DS_Store
+
+# Escludi il database locale reale per non committarlo su GitHub
+bunker_commerciale.db
+*.db
+.env
+
+# Escludi tutti i file Excel di lavoro commerciale
+*.xlsx
+*.xls
+*.csv
+
+# ECCEZIONE: Consenti solo il file seed demo fittizio (se lo userai in futuro)
+!demo_seed_data.xlsx
