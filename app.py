@@ -1006,11 +1006,28 @@ if menu == "Simulatore Offerte":
         text_vals.append(fmt_it(float(net_net_post_promo), 3))
         
     fig = go.Figure(go.Waterfall(
-        orientation="v", measure=measures, x=x_vals, y=y_vals, text=text_vals, textposition="outside",
-        decreasing={"marker":{"color":"#EF4444"}}, increasing={"marker":{"color":"#22C55E"}}, totals={"marker":{"color":"#1E3A8A"}}
-    ))
-    fig.update_layout(title="Evoluzione del Margine Unitario (€)", waterfallgap=0.2, margin=dict(t=40, b=40, l=40, r=40), showlegend=False)
-    st.plotly_chart(fig, use_container_width=True)
+    orientation="v", 
+    measure=measures, 
+    x=x_vals, 
+    y=y_vals, 
+    text=text_vals, 
+    textposition="outside",
+    # Aggiornamento colori in linea con la palette "Natural Tones"
+    decreasing={"marker":{"color":"#A34A3F"}},  # Rosso caldo opaco (Salov Rose)
+    increasing={"marker":{"color":"#8A9A5B"}},  # Verde salvia (Salov Accent)
+    totals={"marker":{"color":"#5A6340"}}       # Verde oliva scuro (Salov Primary)
+))
+
+fig.update_layout(
+    title="Evoluzione del Margine Unitario (€)", 
+    waterfallgap=0.2, 
+    margin=dict(t=40, b=40, l=40, r=40), 
+    showlegend=False,
+    # Sfondo del grafico trasparente per mostrare il crema del container st.container
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+    font=dict(family="Space Grotesk, sans-serif", size=11, color="#2D3227")
+)
     # ------------------------------------
 
     st.divider()
