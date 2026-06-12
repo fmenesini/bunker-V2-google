@@ -31,26 +31,22 @@ OPERATIVE_COLS = [
 ]
 
 def fmt_it(val, decimals=2, is_euro=False, is_pct=False, sign=False):
-    if pd.isna(val) or val is None: return ""
-    try:
-        val_f = float(val)
-        if sign:
-            s = f"{val_f:+,.{decimals}f}"
-        else:
-            s = f"{val_f:,.{decimals}f}"
-        s = s.replace(",", "X").replace(".", ",").replace("X", ".")
-        if is_euro: return f"€ {s}"
-        if is_pct: return f"{s} %"
-        return s
-    except Exception:
-        return str(val)
+    if pd.isna(val): return ""
+    if sign:
+        s = f"{val:+,.{decimals}f}"
+    else:
+        s = f"{val:,.{decimals}f}"
+    s = s.replace(",", "X").replace(".", ",").replace("X", ".")
+    if is_euro: return f"€ {s}"
+    if is_pct: return f"{s} %"
+    return s
 
 def safe_dec(val):
     if pd.isna(val) or val is None or str(val).strip() == "":
         return Decimal("0.00")
     try:
         return Decimal(str(val))
-    except Exception:
+    except:
         return Decimal("0.00")
 
 def get_subcat(row):
@@ -138,19 +134,6 @@ def init_db():
     cursor.execute("CREATE TABLE IF NOT EXISTS struttura_gdo (id INTEGER PRIMARY KEY AUTOINCREMENT, gruppo_macro TEXT, sottogruppo TEXT, associato_insegna TEXT, attivo BOOLEAN DEFAULT 0, UNIQUE(gruppo_macro, sottogruppo, associato_insegna))")
     cursor.execute("CREATE TABLE IF NOT EXISTS accordi_commerciali (id INTEGER PRIMARY KEY AUTOINCREMENT, gruppo_macro TEXT, sottogruppo TEXT, associato_insegna TEXT, livello TEXT, chiave_livello TEXT, listino_r REAL, sconto_1 REAL, sconto_2 REAL, sconto_3 REAL, sconto_4 REAL, sconto_5 REAL, sconto_6 REAL, sconto_7 REAL, sconto_y REAL, sconto_carico REAL, sconto_pagamento REAL, voce_contratto_1 REAL, voce_contratto_2 REAL, voce_contratto_3 REAL, voce_contratto_4 REAL, voce_contratto_5 REAL, note_locali TEXT, UNIQUE(gruppo_macro, sottogruppo, associato_insegna, livello, chiave_livello))")
     cursor.execute("CREATE TABLE IF NOT EXISTS storico_promo (id INTEGER PRIMARY KEY AUTOINCREMENT, data_salvataggio TIMESTAMP DEFAULT CURRENT_TIMESTAMP, stato_promo TEXT, gruppo_macro TEXT, sottogruppo TEXT, associato_insegna TEXT, ean TEXT, descrizione_commerciale TEXT, listino_r REAL, sconto_y REAL, sconto_z REAL, sconto_aa REAL, net_net_am REAL, volumi_stimati INTEGER, contributo_fisso REAL, contributo_pezzo REAL, costo_totale_extra REAL, note TEXT, sell_in_dal DATE, sell_in_al DATE, sell_out_dal DATE, sell_out_al DATE, min_net_net_g REAL, net_net_post_promo REAL)")
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS proposte_rinnovi (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, 
-            data_salvataggio TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-            nome_proposta TEXT, 
-            gruppo_macro TEXT, 
-            sottogruppo TEXT, 
-            associato_insegna TEXT, 
-            global_carico REAL, 
-            global_pagamento REAL, 
-            dati_json TEXT
-        )
-    """)
     conn.commit()
 
     migrazioni = [
@@ -166,8 +149,9 @@ def init_db():
     for query in migrazioni:
         try:
             cursor.execute(query)
+            conn.commit()  # ✅ Se funziona, salva subito questa modifica
         except sqlite3.OperationalError:
-            pass
+            conn.rollback()  # 🛡️ Se fallisce (colonna già esistente), resetta lo stato ed evita il blocco!
     conn.commit()
 
     cursor.execute("SELECT COUNT(*) FROM anagrafica_master")
@@ -222,11 +206,17 @@ def get_merged_contract(conn, gruppo, sottogruppo, insegna, ean, categoria):
     
 def seed_baseline_data(conn):
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM accordi_commerciali")
-    cursor.execute("DELETE FROM clienti")
-    cursor.execute("DELETE FROM anagrafica_master")
-    cursor.execute("DELETE FROM guardrail_aziendali")
-    cursor.execute("DELETE FROM struttura_gdo")
+    
+    # 🛡️ Resetta preventivamente la transazione per ripulire eventuali errori precedenti
+    conn.rollback()
+    
+    # Esegue le cancellazioni proteggendo ogni singola operazione
+    for tabella in ["accordi_commerciali", "clienti", "anagrafica_master", "guardrail_aziendali", "struttura_gdo"]:
+        try:
+            cursor.execute(f"DELETE FROM {tabella}")
+            conn.commit()
+        except sqlite3.OperationalError:
+            conn.rollback()
     
     prodotti_salov = [
         ("8002210111110", "10002713", "EXTRAVERGINE", "SAGRA EXV BOT W12x1L CLASS IT", "Ex.v. Sagra Classico lt.1", 1.0, 10.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
@@ -250,7 +240,7 @@ def seed_baseline_data(conn):
         ("8002210131767", "10002765", "EXTRAVERGINE", "FBERIO EXV BOT W12x750ML CLASS IT", "Ex.v. Filippo Berio Classico lt.0,75", 0.75, 12.00, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
         ("8002210131668", "10002746", "EXTRAVERGINE", "FBERIO EXV BSA BOT W12x750ML IT", "Ex.v. Filippo Berio Bassa Acidità lt.0,75", 0.75, 17.00, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
         ("8002210131804", "10002768", "EXTRAVERGINE", "FBERIO EXV 100%I BOT W12x750ML IT", "Ex.v. Filippo Berio 100% Italiano lt.0,75", 0.75, 18.00, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
-        ("8002210133013", "10003200", "EXTRAVERGINE", "FB R.O. EXV BIO 100%IT MB BOT W12X750 IT", "Ex.v. Filippo Berio Riserva Oro lt.0,75", 0.75, 19.00, "Bott.Lt 0,75", 12, 12, 5, 60, 18, 12),
+        ("8002210133013", "10003200", "EXTRAVERGINE", "FB R.O. EXV BIO 100%IT MB BOT W12X750 IT", "Ex.v. Filippo Berio Riserva Oro lt.0,75", 0.75, 19.00, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
         ("8002210121461", "60000544", "EXTRAVERGINE", "EX.V. BUSTINA 10mlx250 FILIPPO BERIO ITA", "Ex.v. Filippo Berio Bustina ml.10", 0.01, 0.12, "bust lt 0,01", 250, 20, 5, 100, 14, 9),
         ("8002210126572", "10003240", "OLIVA", "SAGRA OOL PUR R-PET V12X750ML CLASS IT", "Oliva Sagra RPET lt.0,75 PET", 0.75, 8.00, "Pet.Lt 0,75", 12, 12, 5, 60, 18, 12),
         ("8002210001305", "10002717", "OLIVA", "SAGRA OOL BOT W12x1L CLASS", "Oliva Sagra lt.1", 1.0, 8.00, "Bott.Lt 1", 12, 8, 5, 40, 18, 12),
@@ -301,23 +291,23 @@ def seed_baseline_data(conn):
         cursor.execute("INSERT OR REPLACE INTO guardrail_aziendali (ean, min_net_net_g) VALUES (?, ?)", (p[0], p[6]))
         
     gdo_structure = [
-        ("SELEX GRUPPO COMMERCIALE", "", "ALFI"), ("SELEX GRUPPO COMMERCIALE", "", "DIMAR"), ("SELEX GRUPPO COMMERCIALE", "", "ITALBRIX"), ("SELEX GRUPPO COMMERCIALE", "", "RIALTO"), ("SELEX GRUPPO COMMERCIALE", "", "ALÌ"), ("SELEX GRUPPO COMMERCIALE", "", "ARCA COMMERCIALE"), ("SELEX GRUPPO COMMERCIALE", "", "SUPERMERCATI CADORO"), ("SELEX GRUPPO COMMERCIALE", "", "MAXI DÌ"), ("SELEX GRUPPO COMMERCIALE", "", "UNICOMM"), ("SELEX GRUPPO COMMERCIALE", "", "CE.DI. GROS"), ("SELEX GRUPPO COMMERCIALE", "", "CE.DI MARCHE"), ("SELEX GRUPPO COMMERCIALE", "", "GMF GRANDI MAGAZZINI FIORONI"), ("SELEX GRUPPO COMMERCIALE", "", "MAGAZZINI GABRIELLI"), ("SELEX GRUPPO COMMERCIALE", "", "L’ABBONDANZA"), ("SELEX GRUPPO COMMERCIALE", "", "SUPER ELITE"), ("SELEX GRUPPO COMMERCIALE", "", "SUPEREMME"), ("SELEX GRUPPO COMMERCIALE", "", "CDS"), ("SELEX GRUPPO COMMERCIALE", "", "MEGAMARK"),
-        ("GRUPPO VÉGÉ", "", "AMERICAN CASH"), ("GRUPPO VÉGÉ", "", "APULIA DISTRIBUZIONE"), ("GRUPPO VÉGÉ", "", "ASTA"), ("GRUPPO VÉGÉ", "", "BAVA"), ("GRUPPO VÉGÉ", "", "BENNET"), ("GRUPPO VÉGÉ", "", "CAPUTO SAVERIO & FIGLI"), ("GRUPPO VÉGÉ", "", "CARAMICO GAETANO & C."), ("GRUPPO VÉGÉ", "", "CENTRODET"), ("GRUPPO VÉGÉ", "", "COAL"), ("GRUPPO VÉGÉ", "", "COLONIAL SUD"), ("GRUPPO VÉGÉ", "", "DETERCART LOMBARDO"), ("GRUPPO VÉGÉ", "", "ERREGI"), ("GRUPPO VÉGÉ", "", "F.LLI ARENA"), ("GRUPPO VÉGÉ", "", "F.LLI MORGESE"), ("GRUPPO VÉGÉ", "", "GAMBARDELLA"), ("GRUPPO VÉGÉ", "", "GARGIULO & MAIELLO"), ("GRUPPO VÉGÉ", "", "GDA"), ("GRUPPO VÉGÉ", "", "GENERAL TRADE"), ("GRUPPO VÉGÉ", "", "G.F.E."), ("GRUPPO VÉGÉ", "", "GRD"), ("GRUPPO VÉGÉ", "", "GROSSY"), ("GRUPPO VÉGÉ", "", "I.S.A."), ("GRUPPO VÉGÉ", "", "MARKET INGROSS"), ("GRUPPO VÉGÉ", "", "MIGROSS"), ("GRUPPO VÉGÉ", "", "MODERNA 2020"), ("GRUPPO VÉGÉ", "", "MULTICEDI"), ("GRUPPO VÉGÉ", "", "MULTICEDI MCN"), ("GRUPPO VÉGÉ", "", "ROSSI"), ("GRUPPO VÉGÉ", "", "SCELGO"), ("GRUPPO VÉGÉ", "", "SI.D.I. PICCOLO"), ("GRUPPO VÉGÉ", "", "SUPERMERCATI TOSANO CEREA"), ("GRUPPO VÉGÉ", "", "VEGA"),
-        ("CONAD", "CONAD SOTTOGRUPPO", "CONAD CENTRO NORD"), ("CONAD", "CONAD SOTTOGRUPPO", "COMMERCIANTI INDIPENDENTI ASSOCIATI (CIA)"), ("CONAD", "CONAD SOTTOGRUPPO", "CONAD NORD OVEST"), ("CONAD", "CONAD SOTTOGRUPPO", "CONAD ADRIATICO"), ("CONAD", "CONAD SOTTOGRUPPO", "PAC 2000A"),
-        ("COOP ITALIA", "COOP ITALIA SOTTOGRUPPO", "COOP ALLEANZA 3.0"), ("COOP ITALIA", "COOP ITALIA SOTTOGRUPPO", "COOP LIGURIA"), ("COOP ITALIA", "COOP ITALIA SOTTOGRUPPO", "NOVA COOP"), ("COOP ITALIA", "COOP ITALIA SOTTOGRUPPO", "COOP LOMBARDIA"), ("COOP ITALIA", "COOP ITALIA SOTTOGRUPPO", "UNICOOP FIRENZE"), ("COOP ITALIA", "COOP ITALIA SOTTOGRUPPO", "UNICOOP ETRURIA"), ("COOP ITALIA", "COOP ITALIA SOTTOGRUPPO", "COOP RENO"), ("COOP ITALIA", "COOP ITALIA SOTTOGRUPPO", "COOP UNIONE AMIATINA"), ("COOP ITALIA", "COOP ITALIA SOTTOGRUPPO", "SAIT COOP"),
-        ("C3", "", "BRENDOLAN ALIMENTARI"), ("C3", "", "C.D. GEST"), ("C3", "", "COLLE VERDE"), ("C3", "", "D’AMBROS IPERMERCATO"), ("C3", "", "GROS CIDAC"), ("C3", "", "GRUPPO BRIÒ"), ("C3", "", "ITALCASH"), ("C3", "", "LANDO F.LLI"), ("C3", "", "LANZA COMMERCIO DETERGENZA"), ("C3", "", "LEKKERLAND ITALIA"), ("C3", "", "LEM MARKET"), ("C3", "", "PERRONE"), ("C3", "", "PREMIUM PRICE ITALIA"), ("C3", "", "RETAILPRO"), ("C3", "", "SCUDO"), ("C3", "", "SUPERMERCATI GRISI"), ("C3", "", "SUPERMERCATI MARTINELLI"), ("C3", "", "SUPERMERCATI VISOTTO"), ("C3", "", "TO.CAL"), ("C3", "", "VIVO FRIULI VENEZIA GIULIA"),
-        ("AGORÀ NETWORK", "", "GRUPPO POLI"), ("AGORÀ NETWORK", "", "IPERAL SUPERMERCATI"), ("AGORÀ NETWORK", "", "ROSSETTO TRADE"), ("AGORÀ NETWORK", "", "SOGEGROSS"), ("AGORÀ NETWORK", "", "TIGROS"),
-        ("CRAI GRUPPO", "CRAI SOTTOGRUPPO", "SILDA"), ("CRAI GRUPPO", "CRAI SOTTOGRUPPO", "CRAI MEDITERRANEA"), ("CRAI GRUPPO", "CRAI SOTTOGRUPPO", "DISTRIBUZIONE SICILIANO"), ("CRAI GRUPPO", "CRAI SOTTOGRUPPO", "CRAI TIRRENO"), ("CRAI GRUPPO", "CRAI SOTTOGRUPPO", "ARCEV"), ("CRAI GRUPPO", "CRAI SOTTOGRUPPO", "CODÈ CRAI OVEST"), ("CRAI GRUPPO", "CRAI SOTTOGRUPPO", "F.LLI IBBA"), ("CRAI GRUPPO", "CRAI SOTTOGRUPPO", "AMA CRAI EST"), ("CRAI GRUPPO", "CRAI SOTTOGRUPPO", "SUPERCENTRO"),
-        ("DESPAR SERVIZI", "", "MAIORA"), ("DESPAR SERVIZI", "", "ERGON"), ("DESPAR SERVIZI", "", "FIORINO"), ("DESPAR SERVIZI", "", "SCS-SUPERMERCATI CONSORZIATI SARDEGNA"), ("DESPAR SERVIZI", "", "CENTRO 3A"),
-        ("D.IT DISTRIBUZIONE ITALIANA", "", "CE.DI. SIGMA CAMPANIA"), ("D.IT DISTRIBUZIONE ITALIANA", "", "CONSORZIO EUROPA"), ("D.IT DISTRIBUZIONE ITALIANA", "", "LOMBARDI & C."), ("D.IT DISTRIBUZIONE ITALIANA", "", "REALCO"), ("D.IT DISTRIBUZIONE ITALIANA", "", "SAN FRANCESCO"), ("D.IT DISTRIBUZIONE ITALIANA", "", "SISA SICILIA"), ("D.IT DISTRIBUZIONE ITALIANA", "", "EUROPA COMMERCIALE"), ("D.IT DISTRIBUZIONE ITALIANA", "", "LE DELIZIE DEL SUD"), ("D.IT DISTRIBUZIONE ITALIANA", "", "VA.PA."),
-        ("EUROSPIN", "", "SPESA INTELLIGENTE"), ("EUROSPIN", "", "EUROSPIN TIRRENICA"), ("EUROSPIN", "", "EUROSPIN LAZIO"), ("EUROSPIN", "", "EUROSPIN PUGLIA"), ("EUROSPIN", "", "EUROSPIN SICILIA"),
-        ("CONSORZIO CORALIS", "", "ALIM GROSS"), ("CONSORZIO CORALIS", "", "CDC"), ("CONSORZIO CORALIS", "", "D.IN.AL."), ("CONSORZIO CORALis", "", "DUECI"), ("CONSORZIO CORALIS", "", "FILICE GIOVANNI"), ("CONSORZIO CORALIS", "", "FILICE GROUP"), ("CONSORZIO CORALIS", "", "GIGANTE ALIMENTARI"), ("CONSORZIO CORALIS", "", "GSD"), ("CONSORZIO CORALIS", "", "LA PRIMA"), ("CONSORZIO CORALIS", "", "LOMBARDO"), ("CONSORZIO CORALIS", "", "MAGNONE PIÙ"), ("CONSORZIO CORALIS", "", "MERIDIO"), ("CONSORZIO CORALIS", "", "PASCAR"), ("CONSORZIO CORALIS", "", "PREZZEMOLO&VITALE"), ("CONSORZIO CORALIS", "", "TUTTODISTRIBUZIONE"), ("CONSORZIO CORALIS", "", "VICINO A TE"),
-        ("GRUPPO FINIPER CANOVA", "", "IPER MONTEBELLO"), ("GRUPPO FINIPER CANOVA", "", "UNES"),
-        ("ESSELUNGA GRUPPO", "ESSELUNGA SOTTOGRUPPO", "ESSELUNGA"),
-        ("PAM GRUPPO", "PAM SOTTOGRUPPO", "PAM"),
-        ("SELEX GRUPPO", "SELEX SOTTOGRUPPO", "SELEX ")
+        ("SELEX GRUPPO COMMERCIALE", "ALFI"), ("SELEX GRUPPO COMMERCIALE", "DIMAR"), ("SELEX GRUPPO COMMERCIALE", "ITALBRIX"), ("SELEX GRUPPO COMMERCIALE", "RIALTO"), ("SELEX GRUPPO COMMERCIALE", "ALÌ"), ("SELEX GRUPPO COMMERCIALE", "ARCA COMMERCIALE"), ("SELEX GRUPPO COMMERCIALE", "SUPERMERCATI CADORO"), ("SELEX GRUPPO COMMERCIALE", "MAXI DÌ"), ("SELEX GRUPPO COMMERCIALE", "UNICOMM"), ("SELEX GRUPPO COMMERCIALE", "CE.DI. GROS"), ("SELEX GRUPPO COMMERCIALE", "CE.DI MARCHE"), ("SELEX GRUPPO COMMERCIALE", "GMF GRANDI MAGAZZINI FIORONI"), ("SELEX GRUPPO COMMERCIALE", "MAGAZZINI GABRIELLI"), ("SELEX GRUPPO COMMERCIALE", "L’ABBONDANZA"), ("SELEX GRUPPO COMMERCIALE", "SUPER ELITE"), ("SELEX GRUPPO COMMERCIALE", "SUPEREMME"), ("SELEX GRUPPO COMMERCIALE", "CDS"), ("SELEX GRUPPO COMMERCIALE", "MEGAMARK"),
+        ("GRUPPO VÉGÉ", "AMERICAN CASH"), ("GRUPPO VÉGÉ", "APULIA DISTRIBUZIONE"), ("GRUPPO VÉGÉ", "ASTA"), ("GRUPPO VÉGÉ", "BAVA"), ("GRUPPO VÉGÉ", "BENNET"), ("GRUPPO VÉGÉ", "CAPUTO SAVERIO & FIGLI"), ("GRUPPO VÉGÉ", "CARAMICO GAETANO & C."), ("GRUPPO VÉGÉ", "CENTRODET"), ("GRUPPO VÉGÉ", "COAL"), ("GRUPPO VÉGÉ", "COLONIAL SUD"), ("GRUPPO VÉGÉ", "DETERCART LOMBARDO"), ("GRUPPO VÉGÉ", "ERREGI"), ("GRUPPO VÉGÉ", "F.LLI ARENA"), ("GRUPPO VÉGÉ", "F.LLI MORGESE"), ("GRUPPO VÉGÉ", "GAMBARDELLA"), ("GRUPPO VÉGÉ", "GARGIULO & MAIELLO"), ("GRUPPO VÉGÉ", "GDA"), ("GRUPPO VÉGÉ", "GENERAL TRADE"), ("GRUPPO VÉGÉ", "G.F.E."), ("GRUPPO VÉGÉ", "GRD"), ("GRUPPO VÉGÉ", "GROSSY"), ("GRUPPO VÉGÉ", "I.S.A."), ("GRUPPO VÉGÉ", "MARKET INGROSS"), ("GRUPPO VÉGÉ", "MIGROSS"), ("GRUPPO VÉGÉ", "MODERNA 2020"), ("GRUPPO VÉGÉ", "MULTICEDI"), ("GRUPPO VÉGÉ", "MULTICEDI MCN"), ("GRUPPO VÉGÉ", "ROSSI"), ("GRUPPO VÉGÉ", "SCELGO"), ("GRUPPO VÉGÉ", "SI.D.I. PICCOLO"), ("GRUPPO VÉGÉ", "SUPERMERCATI TOSANO CEREA"), ("GRUPPO VÉGÉ", "VEGA"),
+        ("CONAD", "CONAD CENTRO NORD"), ("CONAD", "COMMERCIANTI INDIPENDENTI ASSOCIATI (CIA)"), ("CONAD", "CONAD NORD OVEST"), ("CONAD", "CONAD ADRIATICO"), ("CONAD", "PAC 2000A"),
+        ("COOP ITALIA", "COOP ALLEANZA 3.0"), ("COOP ITALIA", "COOP LIGURIA"), ("COOP ITALIA", "NOVA COOP"), ("COOP ITALIA", "COOP LOMBARDIA"), ("COOP ITALIA", "UNICOOP FIRENZE"), ("COOP ITALIA", "UNICOOP ETRURIA"), ("COOP ITALIA", "COOP RENO"), ("COOP ITALIA", "COOP UNIONE AMIATINA"), ("COOP ITALIA", "SAIT COOP"),
+        ("C3", "BRENDOLAN ALIMENTARI"), ("C3", "C.D. GEST"), ("C3", "COLLE VERDE"), ("C3", "D’AMBROS IPERMERCATO"), ("C3", "GROS CIDAC"), ("C3", "GRUPPO BRIÒ"), ("C3", "ITALCASH"), ("C3", "LANDO F.LLI"), ("C3", "LANZA COMMERCIO DETERGENZA"), ("C3", "LEKKERLAND ITALIA"), ("C3", "LEM MARKET"), ("C3", "PERRONE"), ("C3", "PREMIUM PRICE ITALIA"), ("C3", "RETAILPRO"), ("C3", "SCUDO"), ("C3", "SUPERMERCATI GRISI"), ("C3", "SUPERMERCATI MARTINELLI"), ("C3", "SUPERMERCATI VISOTTO"), ("C3", "TO.CAL"), ("C3", "VIVO FRIULI VENEZIA GIULIA"),
+        ("AGORÀ NETWORK", "GRUPPO POLI"), ("AGORÀ NETWORK", "IPERAL SUPERMERCATI"), ("AGORÀ NETWORK", "ROSSETTO TRADE"), ("AGORÀ NETWORK", "SOGEGROSS"), ("AGORÀ NETWORK", "TIGROS"),
+        ("CRAI GRUPPO", "SILDA"), ("CRAI GRUPPO", "CRAI MEDITERRANEA"), ("CRAI GRUPPO", "DISTRIBUZIONE SICILIANO"), ("CRAI GRUPPO", "CRAI TIRRENO"), ("CRAI GRUPPO", "ARCEV"), ("CRAI GRUPPO", "CODÈ CRAI OVEST"), ("CRAI GRUPPO", "F.LLI IBBA"), ("CRAI GRUPPO", "AMA CRAI EST"), ("CRAI GRUPPO", "SUPERCENTRO"),
+        ("DESPAR SERVIZI", "MAIORA"), ("DESPAR SERVIZI", "ERGON"), ("DESPAR SERVIZI", "FIORINO"), ("DESPAR SERVIZI", "SCS-SUPERMERCATI CONSORZIATI SARDEGNA"), ("DESPAR SERVIZI", "CENTRO 3A"),
+        ("D.IT DISTRIBUZIONE ITALIANA", "CE.DI. SIGMA CAMPANIA"), ("D.IT DISTRIBUZIONE ITALIANA", "CONSORZIO EUROPA"), ("D.IT DISTRIBUZIONE ITALIANA", "LOMBARDI & C."), ("D.IT DISTRIBUZIONE ITALIANA", "REALCO"), ("D.IT DISTRIBUZIONE ITALIANA", "SAN FRANCESCO"), ("D.IT DISTRIBUZIONE ITALIANA", "SISA SICILIA"), ("D.IT DISTRIBUZIONE ITALIANA", "EUROPA COMMERCIALE"), ("D.IT DISTRIBUZIONE ITALIANA", "LE DELIZIE DEL SUD"), ("D.IT DISTRIBUZIONE ITALIANA", "VA.PA."),
+        ("EUROSPIN", "SPESA INTELLIGENTE"), ("EUROSPIN", "EUROSPIN TIRRENICA"), ("EUROSPIN", "EUROSPIN LAZIO"), ("EUROSPIN", "EUROSPIN PUGLIA"), ("EUROSPIN", "EUROSPIN SICILIA"),
+        ("CONSORZIO CORALIS", "ALIM GROSS"), ("CONSORZIO CORALIS", "CDC"), ("CONSORZIO CORALIS", "D.IN.AL."), ("CONSORZIO CORALIS", "DUECI"), ("CONSORZIO CORALIS", "FILICE GIOVANNI"), ("CONSORZIO CORALIS", "FILICE GROUP"), ("CONSORZIO CORALIS", "GIGANTE ALIMENTARI"), ("CONSORZIO CORALIS", "GSD"), ("CONSORZIO CORALIS", "LA PRIMA"), ("CONSORZIO CORALIS", "LOMBARDO"), ("CONSORZIO CORALIS", "MAGNONE PIÙ"), ("CONSORZIO CORALIS", "MERIDIO"), ("CONSORZIO CORALIS", "PASCAR"), ("CONSORZIO CORALIS", "PREZZEMOLO&VITALE"), ("CONSORZIO CORALIS", "TUTTODISTRIBUZIONE"), ("CONSORZIO CORALIS", "VICINO A TE"),
+        ("GRUPPO FINIPER CANOVA", "IPER MONTEBELLO"), ("GRUPPO FINIPER CANOVA", "UNES"),
+        ("ESSELUNGA GRUPPO", "ESSELUNGA"),
+        ("PAM GRUPPO", "PAM"),
+        ("SELEX GRUPPO", "SELEX ")
     ]
-    cursor.executemany("INSERT INTO struttura_gdo (gruppo_macro, sottogruppo, associato_insegna) VALUES (?, ?, ?)", gdo_structure)
+    cursor.executemany("INSERT INTO struttura_gdo (gruppo_macro, associato_insegna) VALUES (?, ?)", gdo_structure)
     
     demo_insegne = ['COOP ALLEANZA 3.0', 'CONAD ADRIATICO', 'ESSELUNGA', 'SELEX ', 'PAM', 'CRAI TIRRENO']
     for ins in demo_insegne:
@@ -364,7 +354,157 @@ def seed_baseline_data(conn):
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, fallback_data)
     conn.commit()
-    conn.close()
+
+def seed_baseline_data(conn):
+    cursor = conn.cursor()
+    
+    # 🛡️ Resetta preventivamente la transazione per ripulire eventuali errori precedenti
+    conn.rollback()
+    
+    # Esegue le cancellazioni proteggendo ogni singola operazione
+    for tabella in ["accordi_commerciali", "clienti", "anagrafica_master", "guardrail_aziendali", "struttura_gdo"]:
+        try:
+            cursor.execute(f"DELETE FROM {tabella}")
+            conn.commit()  # Salva subito la cancellazione se va a buon fine
+        except sqlite3.OperationalError:
+            conn.rollback()  # Se una singola tabella è bloccata o dà errore, resetta e passa alla successiva
+    
+    prodotti_salov = [
+        ("8002210111110", "10002713", "EXTRAVERGINE", "SAGRA EXV BOT W12x1L CLASS IT", "Ex.v. Sagra Classico lt.1", 1.0, 10.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210133440", "10003255", "EXTRAVERGINE", "SAGRA EXV 100%R-PET V12x750ML IT", "Ex.v. Sagra lt.0,75 PET", 0.75, 7.50, "Pet.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210115088", "10002716", "EXTRAVERGINE", "SAGRA GRAND EXV BOT W12x1L", "Ex.v. Sagra Grandulivo lt.1", 1.0, 10.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210127562", "10002719", "EXTRAVERGINE", "SAGRA T.VIVE EXV BOT W 12x1L", "Ex.v. Sagra Terre Vive lt.1", 1.0, 10.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210119543", "10000536", "EXTRAVERGINE", "SAGRA PROF. EXV PET C2x5L IT", "Ex.v. Sagra Prof Lt.5", 5.0, 50.00, "Pet lt 5", 2, 17, 4, 68, 14, 9),
+        ("8002210112827", "10002714", "EXTRAVERGINE", "SAGRA EXV 100%I BSA BOT W12x1L IT", "Ex.v. Sagra Bassa Acidità 100% ITA lt.1", 1.0, 15.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210127425", "10002715", "EXTRAVERGINE", "SAGRA EXV 100%I BOT W 12x1L", "Ex.v. Sagra 100% Italiano lt.1", 1.0, 15.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210128286", "10002720", "EXTRAVERGINE", "SAGRA EXV 100%I BIO BOT V12x1L IT", "Ex.v. Sagra Biologico 100% ITA lt.1", 1.0, 15.00, "Vetro lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210128248", "10002747", "EXTRAVERGINE", "SAGRA EXV BOT W12x750ML CLASS IT", "Ex.v. Sagra Classico lt.0,75", 0.75, 7.50, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210121997", "10003315", "EXTRAVERGINE", "SAGRA GRAND EXV BOT W12x750ML  IT", "Ex.v. Sagra Grandulivo 0,75", 0.75, 7.50, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210127197", "10003316", "EXTRAVERGINE", "SAGRA EXV 100%I BSA BOT W12x 750ML IT", "Ex.v. Sagra Bassa Acidità 100% ITA 0,75", 0.75, 11.25, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210133792", "10003317", "EXTRAVERGINE", "SAGRA EXV 100% I BOT W 12x750ML IT", "Ex.v. Sagra 100% Italiano 0,75", 0.75, 11.25, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210131815", "10003319", "EXTRAVERGINE", "SAGRA EXV 100%I BIO BOT W12x750ML IT", "Ex.v. Sagra Biologico 100% ITA  0,75", 0.75, 11.25, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210130814", "60000444", "EXTRAVERGINE", "SAGRA EXV SPRAY C6x200ML ALLUMINIO IT", "Ex.v. Sagra Spray ml.200", 0.2, 2.00, "Spray Lt 0,20", 6, 49, 6, 294, 14, 9),
+        ("8002210124387", "10003061", "EXTRAVERGINE", "SAGRA PROF EXV PET T6x2L IT", "Ex.v. Sagra Prof lt.2", 2.0, 20.00, "Pet.Lt 2", 6, 13, 4, 52, 14, 9),
+        ("8002210131620", "10002724", "EXTRAVERGINE", "FBERIO EXV BOT W12x1L CLASS IT", "Ex.v. Filippo Berio Classico lt.1", 1.0, 12.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210131644", "10002725", "EXTRAVERGINE", "FBERIO EXV BOT W12x1L BSA IT", "Ex.v. Filippo Berio Bassa Acidità lt.1", 1.0, 17.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210131705", "10002726", "EXTRAVERGINE", "FBERIO EXV 100%I BOT W12x1L IT", "Ex.v. Filippo Berio 100% Italiano lt.1", 1.0, 18.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210131767", "10002765", "EXTRAVERGINE", "FBERIO EXV BOT W12x750ML CLASS IT", "Ex.v. Filippo Berio Classico lt.0,75", 0.75, 12.00, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210131668", "10002746", "EXTRAVERGINE", "FBERIO EXV BSA BOT W12x750ML IT", "Ex.v. Filippo Berio Bassa Acidità lt.0,75", 0.75, 17.00, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210131804", "10002768", "EXTRAVERGINE", "FBERIO EXV 100%I BOT W12x750ML IT", "Ex.v. Filippo Berio 100% Italiano lt.0,75", 0.75, 18.00, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210133013", "10003200", "EXTRAVERGINE", "FB R.O. EXV BIO 100%IT MB BOT W12X750 IT", "Ex.v. Filippo Berio Riserva Oro lt.0,75", 0.75, 19.00, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210121461", "60000544", "EXTRAVERGINE", "EX.V. BUSTINA 10mlx250 FILIPPO BERIO ITA", "Ex.v. Filippo Berio Bustina ml.10", 0.01, 0.12, "bust lt 0,01", 250, 20, 5, 100, 14, 9),
+        ("8002210126572", "10003240", "OLIVA", "SAGRA OOL PUR R-PET V12X750ML CLASS IT", "Oliva Sagra RPET lt.0,75 PET", 0.75, 8.00, "Pet.Lt 0,75", 12, 12, 5, 60, 18, 12),
+        ("8002210001305", "10002717", "OLIVA", "SAGRA OOL BOT W12x1L CLASS", "Oliva Sagra lt.1", 1.0, 8.00, "Bott.Lt 1", 12, 8, 5, 40, 18, 12),
+        ("8002210128453", "10002718", "OLIVA", "SAGRA GRAND OOL BOT W12x1L", "Oliva Sagra Grandulivo lt.1", 1.0, 8.00, "Bott.Lt 1", 12, 8, 5, 40, 18, 12),
+        ("8002210126176", "10003288", "OLIVA", "SAGRA OOL PUR R-PET T6X1.5L IT", "Oliva Sagra lt.1,5", 1.5, 12.00, "Pet.Lt 1,5", 6, 16, 4, 64, 18, 12),
+        ("8002210119567", "10000537", "OLIVA", "SAGRA PROF. OOL PUR PET C2x5L IT", "Oliva Sagra Prof Lt.5", 5.0, 40.00, "Pet.Lt 5", 2, 17, 4, 68, 18, 12),
+        ("8002210132436", "10002965", "OLIVA", "FBERIO OOL PUR BOT V6X500ML IT", "Oliva Filippo Berio lt.0,50", 0.5, 4.11, "Bott.Lt 0,5", 6, 30, 6, 180, 18, 12),
+        ("8002210131729", "10002727", "OLIVA", "FBERIO OOL PUR BOT W12x1L IT", "Oliva Filippo Berio lt.1", 1.0, 7.75, "Bott.Lt 1", 12, 8, 5, 40, 18, 12),
+        ("8002210131781", "10002766", "OLIVA", "FBERIO OOL PUR BOT W12x750ML IT", "Oliva Filippo Berio lt.0,75", 0.75, 5.97, "Bott.Lt 0,75", 12, 12, 5, 60, 18, 12),
+        ("8002210122307", "10000922", "OLIVA", "FBERIO OOL PUR LAT V8x1L IT", "Oliva Filippo Berio Latta lt.1", 1.0, 8.10, "Latta lt 1", 8, 12, 5, 60, 18, 12),
+        ("8002210111486", "10003307", "SEMI", "SAGRA SEM MAIS PET V12x1L IT", "Mais Sagra lt.1", 1.0, 2.00, "Pet.Lt 1", 12, 12, 5, 60, 18, 12),
+        ("8002210127067", "10003286", "SEMI", "SAGRA SEM MAIS PET T6x1.5L IT", "Mais Sagrì lt.1,5", 1.5, 3.00, "Pet.Lt 1,5", 6, 16, 4, 64, 18, 12),
+        ("8002210112889", "10003089", "SEMI", "SAGRA SEM MAIS PET T6x2L IT", "Mais Sagra lt.2", 2.0, 4.00, "Pet.Lt 2", 6, 13, 4, 52, 18, 12),
+        ("8002210000551", "10003311", "SEMI", "SAGRA SEM ARACHIDE PET V12x1L IT", "Arachide Sagra lt.1", 1.0, 3.00, "Pet.Lt 1", 12, 12, 5, 60, 18, 12),
+        ("8002210126916", "10003284", "SEMI", "SAGRI SEM ARACHIDE PET T6x1.5L IT", "Arachide Sagrì lt.1,5", 1.5, 4.50, "Pet.Lt 1,5", 6, 16, 4, 64, 18, 12),
+        ("8002210112865", "10003086", "SEMI", "SAGRA SEM ARACHIDE PET T6x2L IT", "Arachide Sagra lt.2", 2.0, 6.00, "Pet.Lt 2", 6, 13, 4, 52, 18, 12),
+        ("8002210116160", "10000326", "SEMI", "SAGRA PROF SEM ARACHIDE PET C2x5L IT", "Arachide Sagra Prof. Lt.5", 5.0, 15.00, "Pet lt 5", 2, 17, 4, 68, 18, 12),
+        ("8002210111905", "10003310", "SEMI", "SAGRA SEM GIRAS PET V12x1L IT", "Girasole Sagra lt.1", 1.0, 2.20, "Pet.Lt 1", 12, 12, 5, 60, 18, 12),
+        ("8002210126817", "10003287", "SEMI", "SAGRI SEM GIRAS PET T6x1.5L IT", "Girasole Sagrì lt.1,5", 1.5, 3.30, "Pet.Lt 1,5", 6, 16, 4, 64, 18, 12),
+        ("8002210113107", "10003087", "SEMI", "SAGRA SEM GIRAS PET T6x2L IT", "Girasole Sagra lt.2", 2.0, 4.40, "Pet.Lt 2", 6, 13, 4, 52, 18, 12),
+        ("8002210115453", "10003062", "SEMI", "SAGRA PROF SEM GIRAS PET C2x5L IT", "Girasole Sagra Prof Lt.5", 5.0, 11.00, "Pet lt 5", 2, 17, 4, 68, 18, 12),
+        ("8002210111295", "10002933", "SEMI", "SAGRA FRIMX SEM FRITT PET V12x1L NOP IT", "Frimax Sagra lt.1", 1.0, 2.25, "Pet Lt 1", 12, 12, 5, 60, 18, 12),
+        ("8002210126893", "10003285", "SEMI", "SAGRI SEM FRITT PET T6x1.5L IT", "Frimax Sagrì lt.1,5", 1.5, 3.38, "Pet.Lt 1,5", 6, 16, 4, 64, 18, 12),
+        ("8002210112940", "10003085", "SEMI", "SAGRA FRIMX SEM FRITT PET T6x2L NOP IT", "Frimax Sagra lt.2", 2.0, 4.50, "Pet Lt 2", 6, 13, 4, 52, 18, 12),
+        ("8002210115484", "10002644", "SEMI", "SAGRA FRIMX SEM FRITT PET C2x5L NOP IT", "Frimax Sagra lt.5", 5.0, 11.25, "Pet Lt 5", 2, 17, 4, 68, 18, 12),
+        ("8002210134140", "10003327", "SEMI", "GRAZIA SEM GIRAS LAT 1x20L IT", "Frimax Spray ml.200", 0.2, 0.45, "Spray Lt 0,20", 6, 49, 6, 294, 18, 12),
+        ("8002210127401", "10003309", "SEMI", "SAGRA SEM GIRAS AO PET V12x1L IT", "Girasole Alto Oleico Sagra lt.1", 1.0, 2.80, "Pet.Lt 1", 12, 12, 5, 60, 18, 12),
+        ("8002210126336", "10003063", "SEMI", "SAGRA PROF SEM GIRAS AO PET C2x5L IT", "Girasole Alto Oleico Sagra Prof lt.5", 5.0, 14.00, "Pet lt 5", 2, 17, 4, 68, 18, 12),
+        ("8002210129290", "10003312", "SEMI", "SAGRA SEM VINACC PET V12x1L IT", "Vinacciolo Sagra lt.1", 1.0, 5.00, "Pet.Lt 1", 12, 12, 5, 60, 18, 12),
+        ("8002210130289", "10003082", "EXTRAVERGINE", "FBERIO EXV CLASS MB BOT V6x250ML IT", "Ex.v. F.Berio Anti Rab Classico lt.0,25", 0.25, 2.50, "Vetro lt 0,25", 6, 49, 5, 245, 14, 9),
+        ("8002210130210", "10003081", "EXTRAVERGINE", "FBERIO EXV 100%I MB BOT V6x250ML IT", "Ex.v. F.Berio Anti Rab 100% ITA lt.0,25", 0.25, 3.00, "Vetro lt 0,25", 6, 49, 5, 245, 14, 9),
+        ("8002210130340", "10003091", "EXTRAVERGINE", "FBERIO EXV CLASS MB BOT V6x500ML IT", "Ex.v. F.Berio Anti Rab Classico lt.0,50", 0.5, 4.30, "Vetro lt 0,50", 6, 31, 5, 155, 14, 9),
+        ("8002210130302", "10003079", "EXTRAVERGINE", "FBERIO EXV 100%I MB BOT V6x500ML IT", "Ex.v. F.Berio Anti Rab 100% ITA lt.0,50", 0.5, 4.80, "Vetro lt 0,50", 6, 31, 5, 155, 14, 9),
+        ("8002210132573", "10003072", "EXTRAVERGINE", "FBERIO EXV BOT V6x500ML TOSC IT", "Ex.v. F.Berio Toscano lt.0,50", 0.5, 10.00, "Vetro lt 0,50", 6, 31, 5, 155, 18, 12),
+        ("8002210130234", "60000591", "EXTRAVERGINE", "FBERIO EXV DRES BOT V6x250ML PEP TE IT", "Ex.v. F.Berio Peperoncino lt.0,25", 0.25, 3.50, "Vetro lt 0,25", 6, 49, 5, 245, 24, 16),
+        ("8002210130791", "60000590", "ACETO", "FBERIO ACE BALS BOT V6x250ML IT", "Aceto Balsamico F.Berio lt.0,25", 0.25, 2.00, "Vetro lt 0,25", 6, 48, 6, 288, 61, 41),
+        ("8002210130197", "60000589", "ACETO", "FBERIO ACE BALS BOT V6x500ML IT", "Aceto Balsamico F.Berio lt.0,50", 0.5, 2.10, "Vetro lt 0,50", 6, 31, 5, 155, 61, 41)
+    ]
+    
+    for p in prodotti_salov:
+        cursor.execute("""
+        INSERT OR REPLACE INTO anagrafica_master (
+            ean, codice_sap, tipo_olio, descrizione_sap, descrizione_commerciale, formato_lt, confezione,
+            pezzi_cartone, cartoni_strato, strati_pallet, cartoni_pallet, conservazione_mesi, shelf_life_mesi
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (p[0], p[1], p[2], p[3], p[4], p[5], p[7], p[8], p[9], p[10], p[11], p[12], p[13]))
+        
+        cursor.execute("INSERT OR REPLACE INTO guardrail_aziendali (ean, min_net_net_g) VALUES (?, ?)", (p[0], p[6]))
+        
+    gdo_structure = [
+        ("SELEX GRUPPO COMMERCIALE", "ALFI"), ("SELEX GRUPPO COMMERCIALE", "DIMAR"), ("SELEX GRUPPO COMMERCIALE", "ITALBRIX"), ("SELEX GRUPPO COMMERCIALE", "RIALTO"), ("SELEX GRUPPO COMMERCIALE", "ALÌ"), ("SELEX GRUPPO COMMERCIALE", "ARCA COMMERCIALE"), ("SELEX GRUPPO COMMERCIALE", "SUPERMERCATI CADORO"), ("SELEX GRUPPO COMMERCIALE", "MAXI DÌ"), ("SELEX GRUPPO COMMERCIALE", "UNICOMM"), ("SELEX GRUPPO COMMERCIALE", "CE.DI. GROS"), ("SELEX GRUPPO COMMERCIALE", "CE.DI MARCHE"), ("SELEX GRUPPO COMMERCIALE", "GMF GRANDI MAGAZZINI FIORONI"), ("SELEX GRUPPO COMMERCIALE", "MAGAZZINI GABRIELLI"), ("SELEX GRUPPO COMMERCIALE", "L’ABBONDANZA"), ("SELEX GRUPPO COMMERCIALE", "SUPER ELITE"), ("SELEX GRUPPO COMMERCIALE", "SUPEREMME"), ("SELEX GRUPPO COMMERCIALE", "CDS"), ("SELEX GRUPPO COMMERCIALE", "MEGAMARK"),
+        ("GRUPPO VÉGÉ", "AMERICAN CASH"), ("GRUPPO VÉGÉ", "APULIA DISTRIBUZIONE"), ("GRUPPO VÉGÉ", "ASTA"), ("GRUPPO VÉGÉ", "BAVA"), ("GRUPPO VÉGÉ", "BENNET"), ("GRUPPO VÉGÉ", "CAPUTO SAVERIO & FIGLI"), ("GRUPPO VÉGÉ", "CARAMICO GAETANO & C."), ("GRUPPO VÉGÉ", "CENTRODET"), ("GRUPPO VÉGÉ", "COAL"), ("GRUPPO VÉGÉ", "COLONIAL SUD"), ("GRUPPO VÉGÉ", "DETERCART LOMBARDO"), ("GRUPPO VÉGÉ", "ERREGI"), ("GRUPPO VÉGÉ", "F.LLI ARENA"), ("GRUPPO VÉGÉ", "F.LLI MORGESE"), ("GRUPPO VÉGÉ", "GAMBARDELLA"), ("GRUPPO VÉGÉ", "GARGIULO & MAIELLO"), ("GRUPPO VÉGÉ", "GDA"), ("GRUPPO VÉGÉ", "GENERAL TRADE"), ("GRUPPO VÉGÉ", "G.F.E."), ("GRUPPO VÉGÉ", "GRD"), ("GRUPPO VÉGÉ", "GROSSY"), ("GRUPPO VÉGÉ", "I.S.A."), ("GRUPPO VÉGÉ", "MARKET INGROSS"), ("GRUPPO VÉGÉ", "MIGROSS"), ("GRUPPO VÉGÉ", "MODERNA 2020"), ("GRUPPO VÉGÉ", "MULTICEDI"), ("GRUPPO VÉGÉ", "MULTICEDI MCN"), ("GRUPPO VÉGÉ", "ROSSI"), ("GRUPPO VÉGÉ", "SCELGO"), ("GRUPPO VÉGÉ", "SI.D.I. PICCOLO"), ("GRUPPO VÉGÉ", "SUPERMERCATI TOSANO CEREA"), ("GRUPPO VÉGÉ", "VEGA"),
+        ("CONAD", "CONAD CENTRO NORD"), ("CONAD", "COMMERCIANTI INDIPENDENTI ASSOCIATI (CIA)"), ("CONAD", "CONAD NORD OVEST"), ("CONAD", "CONAD ADRIATICO"), ("CONAD", "PAC 2000A"),
+        ("COOP ITALIA", "COOP ALLEANZA 3.0"), ("COOP ITALIA", "COOP LIGURIA"), ("COOP ITALIA", "NOVA COOP"), ("COOP ITALIA", "COOP LOMBARDIA"), ("COOP ITALIA", "UNICOOP FIRENZE"), ("COOP ITALIA", "UNICOOP ETRURIA"), ("COOP ITALIA", "COOP RENO"), ("COOP ITALIA", "COOP UNIONE AMIATINA"), ("COOP ITALIA", "SAIT COOP"),
+        ("C3", "BRENDOLAN ALIMENTARI"), ("C3", "C.D. GEST"), ("C3", "COLLE VERDE"), ("C3", "D’AMBROS IPERMERCATO"), ("C3", "GROS CIDAC"), ("C3", "GRUPPO BRIÒ"), ("C3", "ITALCASH"), ("C3", "LANDO F.LLI"), ("C3", "LANZA COMMERCIO DETERGENZA"), ("C3", "LEKKERLAND ITALIA"), ("C3", "LEM MARKET"), ("C3", "PERRONE"), ("C3", "PREMIUM PRICE ITALIA"), ("C3", "RETAILPRO"), ("C3", "SCUDO"), ("C3", "SUPERMERCATI GRISI"), ("C3", "SUPERMERCATI MARTINELLI"), ("C3", "SUPERMERCATI VISOTTO"), ("C3", "TO.CAL"), ("C3", "VIVO FRIULI VENEZIA GIULIA"),
+        ("AGORÀ NETWORK", "GRUPPO POLI"), ("AGORÀ NETWORK", "IPERAL SUPERMERCATI"), ("AGORÀ NETWORK", "ROSSETTO TRADE"), ("AGORÀ NETWORK", "SOGEGROSS"), ("AGORÀ NETWORK", "TIGROS"),
+        ("CRAI GRUPPO", "SILDA"), ("CRAI GRUPPO", "CRAI MEDITERRANEA"), ("CRAI GRUPPO", "DISTRIBUZIONE SICILIANO"), ("CRAI GRUPPO", "CRAI TIRRENO"), ("CRAI GRUPPO", "ARCEV"), ("CRAI GRUPPO", "CODÈ CRAI OVEST"), ("CRAI GRUPPO", "F.LLI IBBA"), ("CRAI GRUPPO", "AMA CRAI EST"), ("CRAI GRUPPO", "SUPERCENTRO"),
+        ("DESPAR SERVIZI", "MAIORA"), ("DESPAR SERVIZI", "ERGON"), ("DESPAR SERVIZI", "FIORINO"), ("DESPAR SERVIZI", "SCS-SUPERMERCATI CONSORZIATI SARDEGNA"), ("DESPAR SERVIZI", "CENTRO 3A"),
+        ("D.IT DISTRIBUZIONE ITALIANA", "CE.DI. SIGMA CAMPANIA"), ("D.IT DISTRIBUZIONE ITALIANA", "CONSORZIO EUROPA"), ("D.IT DISTRIBUZIONE ITALIANA", "LOMBARDI & C."), ("D.IT DISTRIBUZIONE ITALIANA", "REALCO"), ("D.IT DISTRIBUZIONE ITALIANA", "SAN FRANCESCO"), ("D.IT DISTRIBUZIONE ITALIANA", "SISA SICILIA"), ("D.IT DISTRIBUZIONE ITALIANA", "EUROPA COMMERCIALE"), ("D.IT DISTRIBUZIONE ITALIANA", "LE DELIZIE DEL SUD"), ("D.IT DISTRIBUZIONE ITALIANA", "VA.PA."),
+        ("EUROSPIN", "SPESA INTELLIGENTE"), ("EUROSPIN", "EUROSPIN TIRRENICA"), ("EUROSPIN", "EUROSPIN LAZIO"), ("EUROSPIN", "EUROSPIN PUGLIA"), ("EUROSPIN", "EUROSPIN SICILIA"),
+        ("CONSORZIO CORALIS", "ALIM GROSS"), ("CONSORZIO CORALIS", "CDC"), ("CONSORZIO CORALIS", "D.IN.AL."), ("CONSORZIO CORALIS", "DUECI"), ("CONSORZIO CORALIS", "FILICE GIOVANNI"), ("CONSORZIO CORALIS", "FILICE GROUP"), ("CONSORZIO CORALIS", "GIGANTE ALIMENTARI"), ("CONSORZIO CORALIS", "GSD"), ("CONSORZIO CORALIS", "LA PRIMA"), ("CONSORZIO CORALIS", "LOMBARDO"), ("CONSORZIO CORALIS", "MAGNONE PIÙ"), ("CONSORZIO CORALIS", "MERIDIO"), ("CONSORZIO CORALIS", "PASCAR"), ("CONSORZIO CORALIS", "PREZZEMOLO&VITALE"), ("CONSORZIO CORALIS", "TUTTODISTRIBUZIONE"), ("CONSORZIO CORALIS", "VICINO A TE"),
+        ("GRUPPO FINIPER CANOVA", "IPER MONTEBELLO"), ("GRUPPO FINIPER CANOVA", "UNES"),
+        ("ESSELUNGA GRUPPO", "ESSELUNGA"),
+        ("PAM GRUPPO", "PAM"),
+        ("SELEX GRUPPO", "SELEX ")
+    ]
+    cursor.executemany("INSERT INTO struttura_gdo (gruppo_macro, associato_insegna) VALUES (?, ?)", gdo_structure)
+    
+    demo_insegne = ['COOP ALLEANZA 3.0', 'CONAD ADRIATICO', 'ESSELUNGA', 'SELEX ', 'PAM', 'CRAI TIRRENO']
+    for ins in demo_insegne:
+        cursor.execute("UPDATE struttura_gdo SET attivo=1 WHERE associato_insegna=?", (ins,))
+        
+    fallback_data = [
+        ('COOP ITALIA', '', '', 'GRUPPO', '', None, 20.0, 30.0, None, None, None, None, None, None, 1.5, 1.0, 14.0, 8.0, None, None, None, None),
+        ('COOP ITALIA', 'COOP ITALIA SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 66.00, None, None, None, None, None, None, 12.0, 5.0, None, None, None, None, None, None, None, None),
+        ('COOP ITALIA', 'COOP ITALIA SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 60.80, None, None, None, None, None, None, 15.0, 0.0, None, None, None, None, None, None, None, None),
+        ('COOP ITALIA', 'COOP ITALIA SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 43.20, None, None, None, None, None, None, 12.0, 0.0, None, None, None, None, None, None, None, None),
+
+        ('ESSELUNGA GRUPPO', '', '', 'GRUPPO', '', None, 35.0, 15.0, None, None, None, None, None, None, 1.2, 1.0, 12.0, 5.0, None, None, None, None),
+        ('ESSELUNGA GRUPPO', 'ESSELUNGA SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 40.00, None, None, None, None, None, None, 10.0, 7.0, None, None, None, None, None, None, None, None),
+        ('ESSELUNGA GRUPPO', 'ESSELUNGA SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 38.00, None, None, None, None, None, None, 55.0, 0.0, None, None, None, None, None, None, None, None),
+        ('ESSELUNGA GRUPPO', 'ESSELUNGA SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 24.00, None, None, None, None, None, None, 13.0, 0.0, None, None, None, None, None, None, None, None),
+
+        ('CONAD', '', '', 'GRUPPO', '', None, 17.0, 18.0, None, None, None, None, None, None, 1.5, 1.0, 9.0, 11.0, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 50.00, None, None, None, None, None, None, 12.0, 9.0, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 44.00, None, None, None, None, None, None, 11.0, 4.0, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 30.00, None, None, None, None, None, None, 10.0, 4.0, None, None, None, None, None, None, None, None),
+
+        ('SELEX GRUPPO', '', '', 'GRUPPO', '', None, 17.0, 18.0, None, None, None, None, None, None, 1.5, 1.0, 9.0, 11.0, None, None, None, None),
+        ('SELEX GRUPPO', 'SELEX SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 50.00, None, None, None, None, None, None, 12.0, 9.0, None, None, None, None, None, None, None, None),
+        ('SELEX GRUPPO', 'SELEX SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 44.00, None, None, None, None, None, None, 11.0, 4.0, None, None, None, None, None, None, None, None),
+        ('SELEX GRUPPO', 'SELEX SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 30.00, None, None, None, None, None, None, 10.0, 4.0, None, None, None, None, None, None, None, None),
+        
+        ('PAM GRUPPO', '', '', 'GRUPPO', '', None, 15.0, 20.0, None, None, None, None, None, None, 1.4, 1.0, 11.0, 6.0, None, None, None, None),
+        ('PAM GRUPPO', 'PAM SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 52.00, None, None, None, None, None, None, 14.0, 6.0, None, None, None, None, None, None, None, None),
+        ('PAM GRUPPO', 'PAM SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 48.00, None, None, None, None, None, None, 13.0, 3.0, None, None, None, None, None, None, None, None),
+        ('PAM GRUPPO', 'PAM SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 32.00, None, None, None, None, None, None, 9.0, 3.0, None, None, None, None, None, None, None, None),
+
+        ('CRAI GRUPPO', '', '', 'GRUPPO', '', None, 12.0, 25.0, None, None, None, None, None, None, 2.0, 1.0, 7.0, 12.0, None, None, None, None),
+        ('CRAI GRUPPO', 'CRAI SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 56.00, None, None, None, None, None, None, 15.0, 8.0, None, None, None, None, None, None, None, None),
+        ('CRAI GRUPPO', 'CRAI SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 50.00, None, None, None, None, None, None, 12.0, 5.0, None, None, None, None, None, None, None, None),
+        ('CRAI GRUPPO', 'CRAI SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 35.00, None, None, None, None, None, None, 11.0, 5.0, None, None, None, None, None, None, None, None)
+    ]
+    
+    cursor.executemany("""
+    INSERT OR REPLACE INTO accordi_commerciali (
+        gruppo_macro, sottogruppo, associato_insegna, livello, chiave_livello, listino_r,
+        sconto_1, sconto_2, sconto_3, sconto_4, sconto_5,
+        sconto_6, sconto_7, sconto_y, sconto_carico, sconto_pagamento,
+        voce_contratto_1, voce_contratto_2, voce_contratto_3, voce_contratto_4, voce_contratto_5, note_locali
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, fallback_data)
+    conn.commit()
 
 init_db()
 
@@ -381,13 +521,16 @@ if "go_to_menu" in st.session_state:
 st.sidebar.markdown("## Menu Principale")
 
 menu_options = [
+    
     "Simulatore Offerte", 
     "Rinnovi Contrattuali (N vs N+1)",
     "Storico Promozioni", 
+    
     "Dati Anagrafici (Logistica)", 
     "Back-Office (Contratti Nazionali)", 
     "Anagrafica GDO (Clienti)",
     "Accordi Locali (Promo)",
+    
     "Report Sintetico", 
     "Guida Operativa"
 ]
@@ -433,7 +576,7 @@ if menu == "Simulatore Offerte":
     cursor.execute("SELECT DISTINCT gruppo_macro FROM struttura_gdo WHERE attivo=1 ORDER BY gruppo_macro")
     gruppi = [r[0] for r in cursor.fetchall()]
     
-    if not grupos_attivi := gruppi:
+    if not gruppi:
         st.warning("Nessun cliente attivo. Vai in 'Anagrafica GDO' per attivare le insegne.")
         st.stop()
 
@@ -706,7 +849,7 @@ if menu == "Simulatore Offerte":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    st.markdown("#### Structura di Costo (Waterfall)")
+    st.markdown("#### Struttura di Costo (Waterfall)")
     waterfall_data = [{"Fase Pricing": step.fase, "Valore Unitario": fmt_it(float(step.valore), 3, is_euro=True), "Dettaglio Operazione": step.descrizione} for step in result.steps]
     if mostra_impatto:
         waterfall_data.append({"Fase Pricing": "Impatto Extra (Sell-Out)", "Valore Unitario": fmt_it(float(net_net_post_promo), 3, is_euro=True), "Dettaglio Operazione": f"-{fmt_it(float(impatto_unitario_extra), 3, is_euro=True)}/Pz"})
@@ -975,7 +1118,6 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
     anno_corrente = date.today().year
     conn = sqlite3.connect(DB_FILE)
     
-    # Creazione automatica della tabella per la persistenza degli scenari annuali
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS proposte_rinnovi (
@@ -992,14 +1134,12 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
     """)
     conn.commit()
     
-    # Helper per l'esportazione Excel
     def to_excel_bytes(df):
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df.to_excel(writer, index=False, sheet_name='Export')
         return output.getvalue()
     
-    # Inizializzazione session state rinnovi
     if 'global_carico' not in st.session_state:
         st.session_state.global_carico = 0.0
     if 'global_pagamento' not in st.session_state:
@@ -1009,7 +1149,6 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
     if 'rinnovi_sottogruppo' not in st.session_state:
         st.session_state.rinnovi_sottogruppo = ""
 
-    # Definiamo l'associato vuoto dato che i contratti annuali si stipulano a livello Sottogruppo
     associato_sel = ""
 
     st.markdown("#### 1. Contesto di Riferimento (Pre-compilazione Anno N)")
@@ -1019,7 +1158,6 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
         cursor.execute("SELECT DISTINCT gruppo_macro FROM struttura_gdo WHERE attivo=1 ORDER BY gruppo_macro")
         gruppi = [r[0] for r in cursor.fetchall()]
         
-        # UI semplificata e riorganizzata su 2 blocchi orizzontali secondo UX design
         col_selectors, col_actions = st.columns([3, 2])
         
         with col_selectors:
@@ -1060,7 +1198,6 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
                 nome_scenario = st.text_input("Nome Proposta per Salvare", placeholder="Es. Scenario Q3", label_visibility="collapsed")
                 btn_salva = st.button("Salva Scenario 💾", type="secondary", use_container_width=True, help="Salva lo stato corrente della griglia dei rinnovi per riprenderlo in futuro.")
 
-    # Esecuzione azioni scenario
     if btn_carica:
         if gruppo_sel != "Nessuno":
             df_temp = st.session_state.rinnovi_df.copy()
@@ -1069,7 +1206,6 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
             def safe_float(v): return float(v) if v is not None else 0.0
             
             for idx, row in df_temp.iterrows():
-                # associato_sel è fisso a "" in modo da risolvere le condizioni del Sottogruppo/Gruppo
                 contract = get_merged_contract(conn, gruppo_sel, sottogruppo_sel, associato_sel, row['ean'], row['tipo_olio'])
                 
                 if contract.listino_r is None:
@@ -1174,7 +1310,6 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
     df_base['Categoria'] = df_base['tipo_olio']
     df_base = df_base.rename(columns={'descrizione_commerciale': 'Prodotto', 'min_net_net_g': 'Minimo Net Net €'})
 
-    # --- INIZIALIZZAZIONE STATO DI SESSIONE PER RINNOVI ---
     dettaglio_cols = [
         'S1 %', 'S2 %', 'S3 %', 'S4 %', 'S5 %',
         'PFA I %', 'PFA II %', 'PFA III %', 'PFA IV %', 'PFA V %'
@@ -1188,7 +1323,6 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
     if 'rinnovi_df' not in st.session_state:
         st.session_state.rinnovi_df = df_base.copy()
 
-    # --- SCHEDE INFERIORI ---
     tab_simulazione, tab_risultati, tab_esplosione, tab_storico_rinnovi = st.tabs([
         "1. Master Grid (Input Dati)", 
         "2. Analisi Ponderata & Spazio Promo",
@@ -1200,7 +1334,6 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
         st.markdown("#### Griglia di Simulazione Contrattuale")
         filtro_vista = st.radio("Filtra Referenze in Tabella:", ["Tutte le Referenze", "Solo con Volumi > 0", "Sotto Soglia (Allarme Rosso)"], horizontal=True, key="filtro_vista_rinnovi")
         
-        # --- INPUT GLOBALI PER CARICO E PAGAMENTO ---
         with st.container(border=True):
             st.markdown("**Condizioni Logistiche e Finanziarie (Applicate a tutte le referenze)**")
             col_glob1, col_glob2 = st.columns(2)
@@ -1209,7 +1342,6 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
             with col_glob2:
                 st.number_input("Sconto Pagamento (%)", min_value=0.0, max_value=100.0, step=0.5, key="global_pagamento")
         
-        # --- CALCOLO KPI VARIAZIONE TOTALE PONDERATA ---
         df_kpi = st.session_state.rinnovi_df[st.session_state.rinnovi_df['[N+1] Volumi'] > 0].copy()
         tot_delta_perc = 0.0
         if not df_kpi.empty:
@@ -1262,7 +1394,6 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
             
         df_display['Sc. Promo MAX [N+1] %'] = df_display.apply(calc_max_promo, axis=1)
         
-        # --- APPLICAZIONE DEL FILTRO ---
         if filtro_vista == "Solo con Volumi > 0":
             df_display = df_display[df_display['[N+1] Volumi'] > 0]
         elif filtro_vista == "Sotto Soglia (Allarme Rosso)":
@@ -1782,11 +1913,7 @@ elif menu == "Anagrafica GDO (Clienti)":
     
     conn = sqlite3.connect(DB_FILE)
     
-    df_gdo = pd.read_sql_query("""
-        SELECT id, gruppo_macro, sottogruppo, associato_insegna, attivo 
-        FROM struttura_gdo 
-        ORDER BY gruppo_macro, sottogruppo, associato_insegna
-    """, conn)
+    df_gdo = pd.read_sql_query("SELECT id, gruppo_macro, sottogruppo, associato_insegna, attivo FROM struttura_gdo ORDER BY gruppo_macro, sottogruppo, associato_insegna", conn)
     df_gdo['attivo'] = df_gdo['attivo'].astype(bool)
     
     with st.container(border=True):
@@ -1973,7 +2100,360 @@ elif menu == "Dati Anagrafici (Logistica)":
     conn.close()
 
 # ==========================================
-# SCHEDA 2.5: ACCORDI LOCALI (PROMO)
+# SCHEDA 3: BACK-OFFICE CONTRATTI (NAZIONALI)
+# ==========================================
+elif menu == "Back-Office (Contratti Nazionali)":
+    st.title("Back-Office - Contratti Nazionali")
+    st.markdown("Gestione degli accordi strutturali (Listini, S1-S5, PFA) a livello di Gruppo e Sottogruppo. **Gli sconti locali si inseriscono nella scheda apposita.**")
+    conn = sqlite3.connect(DB_FILE)
+    
+    # --- INSERIMENTO RAPIDO REGOLA NAZIONALE ---
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT gruppo_macro FROM struttura_gdo WHERE attivo=1 ORDER BY gruppo_macro")
+    gruppi_attivi = [r[0] for r in cursor.fetchall()]
+    
+    cursor.execute("SELECT DISTINCT tipo_olio FROM anagrafica_master")
+    categorie_disponibili = [r[0] for r in cursor.fetchall()]
+    
+    cursor.execute("SELECT ean, descrizione_commerciale FROM anagrafica_master")
+    prod_list = [f"{r[1]} [{r[0]}]" for r in cursor.fetchall()]
+    
+    with st.container(border=True):
+        st.markdown("#### ➕ Inserimento Rapido Regola Nazionale")
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            ins_gruppo = st.selectbox("Gruppo", gruppi_attivi, key="ins_g")
+            
+            cursor.execute("""
+                SELECT DISTINCT sottogruppo FROM accordi_commerciali 
+                WHERE gruppo_macro=? AND sottogruppo != '' AND sottogruppo IS NOT NULL
+                UNION
+                SELECT DISTINCT sottogruppo FROM struttura_gdo 
+                WHERE gruppo_macro=? AND sottogruppo != '' AND sottogruppo IS NOT NULL
+                ORDER BY sottogruppo
+            """, (ins_gruppo, ins_gruppo))
+            sottogruppi_attivi_del_gruppo = [r[0] for r in cursor.fetchall()]
+            
+            ins_sottogruppo = st.selectbox(
+                "Sottogruppo", 
+                [""] + sottogruppi_attivi_del_gruppo, 
+                key="ins_sg"
+            )
+            
+        with col2:
+            ins_livello = st.selectbox("Livello Regola", ["GRUPPO", "SOTTOGRUPPO", "CATEGORIA", "REFERENZA"], key="ins_l")
+            
+            if ins_livello == "CATEGORIA":
+                ins_chiave = st.selectbox("Seleziona Categoria", categorie_disponibili, key="ins_c_cat")
+            elif ins_livello == "REFERENZA":
+                ins_chiave = st.selectbox("Seleziona Referenza", prod_list, key="ins_c_ref")
+            else:
+                st.info(f"Regola applicata a tutto il {ins_livello}")
+                ins_chiave = ""
+            
+        with col3:
+            ins_parametro = st.selectbox("Parametro da Impostare", [
+                "Listino Base (R)", "Sconto 1", "Sconto 2", "Sconto 3", "Sconto 4", "Sconto 5",
+                "Oneri Logistica", "Oneri Pagamento", 
+                "PFA Voce I", "PFA Voce II", "PFA Voce III", "PFA Voce IV", "PFA Voce V"
+            ], key="ins_p")
+            ins_valore = st.number_input("Valore", step=0.5, format="%.2f", key="ins_v")
+            
+        with col4:
+            st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+            if st.button("Inserisci / Aggiorna Regola", type="primary", use_container_width=True):
+                chiave_pulita = ""
+                if ins_livello == "CATEGORIA":
+                    chiave_pulita = ins_chiave
+                elif ins_livello == "REFERENZA":
+                    chiave_pulita = ins_chiave.split("[")[-1].replace("]", "").strip() if "[" in ins_chiave else ins_chiave
+                
+                col_map = {
+                    "Listino Base (R)": "listino_r", "Sconto 1": "sconto_1", "Sconto 2": "sconto_2",
+                    "Sconto 3": "sconto_3", "Sconto 4": "sconto_4", "Sconto 5": "sconto_5",
+                    "Oneri Logistica": "sconto_carico", "Oneri Pagamento": "sconto_pagamento",
+                    "PFA Voce I": "voce_contratto_1", "PFA Voce II": "voce_contratto_2", 
+                    "PFA Voce III": "voce_contratto_3", "PFA Voce IV": "voce_contratto_4", "PFA Voce V": "voce_contratto_5"
+                }
+                col_name = col_map[ins_parametro]
+                
+                try:
+                    with conn:
+                        cursor.execute("SELECT id FROM accordi_commerciali WHERE gruppo_macro=? AND sottogruppo=? AND associato_insegna='' AND livello=? AND chiave_livello=?", (ins_gruppo, ins_sottogruppo, ins_livello, chiave_pulita))
+                        row = cursor.fetchone()
+                        if row:
+                            cursor.execute(f"UPDATE accordi_commerciali SET {col_name}=? WHERE id=?", (ins_valore, row[0]))
+                        else:
+                            cursor.execute(f"INSERT INTO accordi_commerciali (gruppo_macro, sottogruppo, associato_insegna, livello, chiave_livello, {col_name}) VALUES (?, ?, '', ?, ?, ?)", (ins_gruppo, ins_sottogruppo, ins_livello, chiave_pulita, ins_valore))
+                    st.success("Regola salvata!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Errore: {e}")
+    # -------------------------------------------
+    
+    tab_contratti, tab_guardrail = st.tabs(["Gestione Contratti Nazionali", "Gestione Minimi Net Net"])
+    
+    with tab_contratti:
+        with st.container(border=True):
+            st.markdown("#### Modifica Diretta dei Contratti in Database")
+            
+            df_database_editor = pd.read_sql_query("""
+                SELECT a.id, a.gruppo_macro, a.sottogruppo, a.livello, a.chiave_livello,
+                       CASE 
+                            WHEN a.livello = 'REFERENZA' THEN p.descrizione_commerciale 
+                            WHEN a.livello = 'CATEGORIA' THEN 'Categoria: ' || a.chiave_livello
+                            ELSE 'Contratto Quadro'
+                       END as descrizione_prodotto,
+                       a.listino_r,
+                       a.sconto_1, a.sconto_2, a.sconto_3, a.sconto_4, a.sconto_5,
+                       a.sconto_carico, a.sconto_pagamento, a.voce_contratto_1, a.voce_contratto_2, a.voce_contratto_3,
+                       a.voce_contratto_4, a.voce_contratto_5
+                FROM accordi_commerciali a
+                LEFT JOIN anagrafica_master p ON a.chiave_livello = p.ean AND a.livello = 'REFERENZA'
+                WHERE a.associato_insegna = '' OR a.associato_insegna IS NULL
+                ORDER BY a.gruppo_macro ASC, a.sottogruppo ASC, 
+                    CASE a.livello
+                        WHEN 'GRUPPO' THEN 1
+                        WHEN 'SOTTOGRUPPO' THEN 2
+                        WHEN 'CATEGORIA' THEN 3
+                        WHEN 'REFERENZA' THEN 4
+                        ELSE 5
+                    END ASC
+            """, conn)
+            
+            edited_df = st.data_editor(
+                df_database_editor, 
+                num_rows="dynamic", 
+                use_container_width=True,
+                hide_index=True,
+                disabled=["descrizione_prodotto"],
+                key="db_data_editor"
+            )
+            
+            if st.button("SALVA MODIFICHE CONTRATTI NAZIONALI", type="primary"):
+                cursor = conn.cursor()
+                try:
+                    with conn:
+                        cursor.execute("DELETE FROM accordi_commerciali WHERE associato_insegna = '' OR associato_insegna IS NULL")
+                        for _, r in edited_df.iterrows():
+                            def check_nan(val):
+                                return float(val) if (pd.notna(val) and str(val).strip() != "") else None
+                            
+                            cursor.execute("""
+                            INSERT OR REPLACE INTO accordi_commerciali (
+                                id, gruppo_macro, sottogruppo, associato_insegna, livello, chiave_livello, listino_r,
+                                sconto_1, sconto_2, sconto_3, sconto_4, sconto_5,
+                                sconto_carico, sconto_pagamento, voce_contratto_1, voce_contratto_2, voce_contratto_3,
+                                voce_contratto_4, voce_contratto_5
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            """, (
+                                check_nan(r.get("id")),
+                                str(r.get("gruppo_macro")).upper().strip() if pd.notna(r.get("gruppo_macro")) else "",
+                                str(r.get("sottogruppo")).upper().strip() if pd.notna(r.get("sottogruppo")) else "",
+                                "", 
+                                str(r.get("livello")).upper().strip() if pd.notna(r.get("livello")) else "GRUPPO",
+                                str(r.get("chiave_livello")).strip() if pd.notna(r.get("chiave_livello")) else "",
+                                check_nan(r.get("listino_r")),
+                                check_nan(r.get("sconto_1")), check_nan(r.get("sconto_2")), check_nan(r.get("sconto_3")),
+                                check_nan(r.get("sconto_4")), check_nan(r.get("sconto_5")),
+                                check_nan(r.get("sconto_carico")), check_nan(r.get("sconto_pagamento")),
+                                check_nan(r.get("voce_contratto_1")), check_nan(r.get("voce_contratto_2")), check_nan(r.get("voce_contratto_3")),
+                                check_nan(r.get("voce_contratto_4")), check_nan(r.get("voce_contratto_5"))
+                            ))
+                    st.success("Contratti Nazionali aggiornati correttamente.")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Errore durante l'elaborazione: {e}")
+
+        col_b1, col_b2 = st.columns(2)
+        
+        with col_b1:
+            with st.container(border=True):
+                st.markdown("#### Esportazione Contratti Nazionali")
+                
+                query_accordi = """
+                SELECT a.gruppo_macro as GRUPPO_MACRO, a.sottogruppo as SOTTOGRUPPO,
+                       a.livello as LIVELLO, a.chiave_livello as CHIAVE_LIVELLO,
+                       CASE 
+                            WHEN a.livello = 'REFERENZA' THEN p.descrizione_commerciale 
+                            WHEN a.livello = 'CATEGORIA' THEN 'Accordo di Categoria: ' || a.chiave_livello
+                            ELSE 'Contratto Quadro'
+                       END as DESCRIZIONE_PRODOTTO,
+                       a.listino_r as LISTINO_BASE_R,
+                       a.sconto_1 as SCONTO_1, a.sconto_2 as SCONTO_2, a.sconto_3 as SCONTO_3, a.sconto_4 as SCONTO_4, a.sconto_5 as SCONTO_5,
+                       a.sconto_carico as SCONTO_CARICO_LOGISTICA, a.sconto_pagamento as SCONTO_PAGAMENTO_AC,
+                       a.voce_contratto_1 as PFA_VOCE_I, a.voce_contratto_2 as PFA_VOCE_II,
+                       a.voce_contratto_3 as PFA_VOCE_III, a.voce_contratto_4 as PFA_VOCE_IV, a.voce_contratto_5 as PFA_VOCE_V
+                FROM accordi_commerciali a
+                LEFT JOIN anagrafica_master p ON a.chiave_livello = p.ean AND a.livello = 'REFERENZA'
+                WHERE a.associato_insegna = '' OR a.associato_insegna IS NULL
+                """
+                df_accordi = pd.read_sql_query(query_accordi, conn)
+                
+                colonne_ordinate = [
+                    "GRUPPO_MACRO", "SOTTOGRUPPO", "LIVELLO", "CHIAVE_LIVELLO", "DESCRIZIONE_PRODOTTO",
+                    "LISTINO_BASE_R", "SCONTO_1", "SCONTO_2", "SCONTO_3", "SCONTO_4", "SCONTO_5",
+                    "SCONTO_CARICO_LOGISTICA", "SCONTO_PAGAMENTO_AC",
+                    "PFA_VOCE_I", "PFA_VOCE_II", "PFA_VOCE_III", "PFA_VOCE_IV", "PFA_VOCE_V"
+                ]
+                df_accordi = df_accordi[colonne_ordinate]
+                
+                buffer_export = io.BytesIO()
+                with pd.ExcelWriter(buffer_export, engine='openpyxl') as writer:
+                    df_accordi.to_excel(writer, index=False, sheet_name="Accordi_Nazionali")
+                    
+                st.download_button(
+                    label="Scarica Template Nazionali (Excel)",
+                    data=buffer_export.getvalue(),
+                    file_name=f"Backup_Contratti_Nazionali_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+
+        with col_b2:
+            with st.container(border=True):
+                st.markdown("#### Importazione Massiva Contratti Nazionali")
+                uploaded_file = st.file_uploader("Trascina il file Excel Contratti (.xlsx)", type=["xlsx"])
+                
+                if uploaded_file is not None:
+                    if st.button("Conferma Scrittura Contratti Nazionali"):
+                        try:
+                            df_import = pd.read_excel(uploaded_file)
+                            colonne_obbligatorie = ["GRUPPO_MACRO", "SOTTOGRUPPO", "LIVELLO", "CHIAVE_LIVELLO"]
+                            
+                            df_import = DataSanitizer.sanitize_excel_import(df_import, expected_columns=colonne_obbligatorie)
+                            
+                            cursor = conn.cursor()
+                            righe_inserite = 0
+                            
+                            with conn:
+                                for idx, row in df_import.iterrows():
+                                    gruppo = str(row["GRUPPO_MACRO"]).upper().strip()
+                                    sottogruppo = str(row["SOTTOGRUPPO"]).upper().strip() if (pd.notna(row.get("SOTTOGRUPPO")) and str(row.get("SOTTOGRUPPO")).strip() != "") else ""
+                                    livello = str(row["LIVELLO"]).upper().strip()
+                                    chiave_livello = str(row["CHIAVE_LIVELLO"]).strip() if pd.notna(row["CHIAVE_LIVELLO"]) else ""
+                                    
+                                    if livello == "REFERENZA" and chiave_livello:
+                                        chiave_livello = str(chiave_livello).split('.')[0].zfill(13)
+
+                                    def to_float_or_none(val):
+                                        if pd.isna(val) or str(val).strip() == "": return None
+                                        try: return float(val)
+                                        except: return None
+
+                                    cursor.execute("""
+                                    INSERT OR REPLACE INTO accordi_commerciali (
+                                        gruppo_macro, sottogruppo, associato_insegna, livello, chiave_livello, listino_r,
+                                        sconto_1, sconto_2, sconto_3, sconto_4, sconto_5,
+                                        sconto_carico, sconto_pagamento,
+                                        voce_contratto_1, voce_contratto_2, voce_contratto_3, voce_contratto_4, voce_contratto_5
+                                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                    """, (
+                                        gruppo, sottogruppo, "", livello, chiave_livello, to_float_or_none(row.get("LISTINO_BASE_R")),
+                                        to_float_or_none(row.get("SCONTO_1")), to_float_or_none(row.get("SCONTO_2")), to_float_or_none(row.get("SCONTO_3")),
+                                        to_float_or_none(row.get("SCONTO_4")), to_float_or_none(row.get("SCONTO_5")),
+                                        to_float_or_none(row.get("SCONTO_CARICO_LOGISTICA")),
+                                        to_float_or_none(row.get("SCONTO_PAGAMENTO_AC")), to_float_or_none(row.get("PFA_VOCE_I")),
+                                        to_float_or_none(row.get("PFA_VOCE_II")), to_float_or_none(row.get("PFA_VOCE_III")),
+                                        to_float_or_none(row.get("PFA_VOCE_IV")), to_float_or_none(row.get("PFA_VOCE_V"))
+                                    ))
+                                    righe_inserite += 1
+                            st.success(f"Elaborate {righe_inserite} regole commerciali.")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Errore durante l'importazione: {e}")
+
+    with tab_guardrail:
+        st.markdown("Minimi Net Net €/pz per Referenza")
+        with st.container(border=True):
+            st.markdown("#### Modifica Diretta Guardrail")
+            
+            df_guardrail = pd.read_sql_query("""
+                SELECT g.ean, a.descrizione_commerciale, g.min_net_net_g
+                FROM guardrail_aziendali g
+                LEFT JOIN anagrafica_master a ON g.ean = a.ean
+            """, conn)
+            
+            edited_guardrail = st.data_editor(
+                df_guardrail, 
+                num_rows="dynamic", 
+                use_container_width=True,
+                hide_index=True,
+                disabled=["descrizione_commerciale"],
+                column_config={
+                    "min_net_net_g": st.column_config.NumberColumn("Min Net Net (€)", format="€ %.2f", step=0.01)
+                },
+                key="guardrail_editor"
+            )
+            
+            if st.button("SALVA MODIFICHE GUARDRAIL", type="primary"):
+                cursor = conn.cursor()
+                try:
+                    with conn:
+                        cursor.execute("DELETE FROM guardrail_aziendali")
+                        for _, r in edited_guardrail.iterrows():
+                            cursor.execute("INSERT INTO guardrail_aziendali (ean, min_net_net_g) VALUES (?, ?)", (str(r.get("ean")).strip(), float(r.get("min_net_net_g", 0.0))))
+                    st.success("Guardrail aggiornati.")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Errore salvataggio guardrail: {e}")
+
+        col_g1, col_g2 = st.columns(2)
+        
+        with col_g1:
+            with st.container(border=True):
+                st.markdown("#### Esportazione Guardrail")
+                
+                buffer_guardrail = io.BytesIO()
+                with pd.ExcelWriter(buffer_guardrail, engine='openpyxl') as writer:
+                    df_guardrail.to_excel(writer, index=False, sheet_name="Guardrail_NetNet")
+                    
+                st.download_button(
+                    label="Scarica Guardrail (Excel)",
+                    data=buffer_guardrail.getvalue(),
+                    file_name=f"Guardrail_Minimi_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+
+        with col_g2:
+            with st.container(border=True):
+                st.markdown("#### Importazione Massiva Guardrail")
+                uploaded_guardrail = st.file_uploader("Trascina il file Excel Guardrail (.xlsx)", type=["xlsx"], key="up_guardrail")
+                
+                if uploaded_guardrail is not None:
+                    if st.button("Conferma Scrittura Guardrail"):
+                        try:
+                            df_g_import = pd.read_excel(uploaded_guardrail)
+                            df_g_import.rename(columns=lambda x: str(x).upper().strip(), inplace=True)
+                            df_g_import = DataSanitizer.sanitize_excel_import(df_g_import)
+                            df_g_import.columns = [str(c).lower().strip() for c in df_g_import.columns]
+                            
+                            if "ean" not in df_g_import.columns or "min_net_net_g" not in df_g_import.columns:
+                                st.error("Il file Excel deve contenere le colonne 'ean' e 'min_net_net_g'.")
+                            else:
+                                cursor = conn.cursor()
+                                righe_inserite = 0
+                                
+                                with conn:
+                                    for idx, row in df_g_import.iterrows():
+                                        ean_val = str(row.get("ean", "")).split('.')[0].zfill(13)
+                                        if not ean_val or ean_val == "0000000000000" or ean_val == "nan": continue
+                                            
+                                        min_g = row.get("min_net_net_g", 0.0)
+                                        try: min_g = float(str(min_g).replace(',', '.'))
+                                        except: min_g = 0.0
+                                            
+                                        cursor.execute("INSERT OR REPLACE INTO guardrail_aziendali (ean, min_net_net_g) VALUES (?, ?)", (ean_val, min_g))
+                                        righe_inserite += 1
+                                        
+                                st.success(f"Aggiornati {righe_inserite} limiti minimi.")
+                                st.rerun()
+                        except Exception as e:
+                            st.error(f"Errore durante l'importazione: {e}")
+
+    conn.close()
+
+# ==========================================
+# SCHEDA 3.1: ACCORDI LOCALI (PROMO)
 # ==========================================
 elif menu == "Accordi Locali (Promo)":
     st.title("Accordi Locali (Insegne / Associati)")
@@ -1982,7 +2462,6 @@ elif menu == "Accordi Locali (Promo)":
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     
-    # Gruppo e Sottogruppo sono esclusi dalla SELECT per l'interfaccia utente
     df_locali = pd.read_sql_query("""
         SELECT a.id, a.associato_insegna, a.livello, 
                COALESCE(m.descrizione_commerciale || ' [' || a.chiave_livello || ']', a.chiave_livello) as prodotto_ean,
@@ -2031,7 +2510,6 @@ elif menu == "Accordi Locali (Promo)":
                         else:
                             chiave_pulita = raw_chiave.strip()
                         
-                        # Recupero automatico di Gruppo e Sottogruppo in background
                         ins_locale = str(r.get("associato_insegna")).upper().strip() if pd.notna(r.get("associato_insegna")) else ""
                         cursor.execute("SELECT gruppo_macro, sottogruppo FROM struttura_gdo WHERE UPPER(TRIM(associato_insegna)) = ? LIMIT 1", (ins_locale,))
                         res_gdo = cursor.fetchone()
@@ -2065,7 +2543,7 @@ elif menu == "Accordi Locali (Promo)":
             buffer_locali = io.BytesIO()
             with pd.ExcelWriter(buffer_locali, engine='openpyxl') as writer:
                 df_locali.to_excel(writer, index=False, sheet_name="Accordi_Locali")
-            st.download_button("Scarica Accordi Locali (Excel)", buffer_locali.getvalue(), f"Accordi_Locali_{datetime.now().strftime('%Y%m%d')}.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="down_accordi_locali_sheet_key")
+            st.download_button("Scarica Accordi Locali (Excel)", buffer_locali.getvalue(), f"Accordi_Locali_{datetime.now().strftime('%Y%m%d')}.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
             
     with col_l2:
         with st.container(border=True):
@@ -2087,7 +2565,6 @@ elif menu == "Accordi Locali (Promo)":
                                 def check_nan(val):
                                     return float(val) if (pd.notna(val) and str(val).strip() != "") else None
                                 
-                                # Recupero automatico dei gruppi associati all'insegna importata
                                 ins_locale = str(r.get("associato_insegna")).upper().strip()
                                 cursor.execute("SELECT gruppo_macro, sottogruppo FROM struttura_gdo WHERE UPPER(TRIM(associato_insegna)) = ? LIMIT 1", (ins_locale,))
                                 res_gdo = cursor.fetchone()
@@ -2146,7 +2623,7 @@ elif menu == "Report Sintetico":
     
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # --- DASHBOARD DIREZIONALE ---
+    # --- DASHBOARD DIREZIONALE (MOTORE RISOLTO) ---
     st.markdown("#### 📊 Dashboard Direzionale (Control Tower)")
     
     cursor.execute("SELECT gruppo_macro, associato_insegna FROM struttura_gdo WHERE attivo=1")
@@ -2188,7 +2665,7 @@ elif menu == "Report Sintetico":
     
     if not df_dash.empty:
         with st.container(border=True):
-            st.subheader("Salute Contratti & Profondità Margine", help="Marginalità residua sui contratti attivi.")
+            st.subheader("Salute Contratti & Profondità Margine", help="A sinistra: Quanti accordi sono sani (Verde) e quanti in perdita (Rosso). Passa il mouse sulle fette per vedere QUALI clienti generano il risultato. A destra: La distanza media in Euro dal limite minimo aziendale (Floor) per ogni categoria.")
             
             col_filt1, col_filt2 = st.columns(2)
             with col_filt1:
@@ -2246,14 +2723,14 @@ elif menu == "Report Sintetico":
         
         with col_dash1:
             with st.container(border=True):
-                st.subheader("Top 5 Clienti per PFA Medio (%)")
+                st.subheader("Top 5 Clienti per PFA Medio (%)", help="Classifica i clienti più 'costosi' in termini di Premi Fuori Fattura. Aiuta a capire chi sta assorbendo la maggior parte del budget promozionale di fine anno.")
                 df_pfa_cli = df_dash.groupby('Cliente')['PFA_Tot'].mean().reset_index().sort_values('PFA_Tot', ascending=False).head(5)
                 fig_pfa = px.bar(df_pfa_cli, x='Cliente', y='PFA_Tot', labels={'Cliente': 'Insegna / Gruppo', 'PFA_Tot': 'PFA Medio (%)'}, color='PFA_Tot', color_continuous_scale='Reds')
                 st.plotly_chart(fig_pfa, use_container_width=True)
         
         with col_dash2:
             with st.container(border=True):
-                st.subheader("Pressione Promozionale (PFA) per Categoria")
+                st.subheader("Pressione Promozionale (PFA) per Categoria", help="Misura quanto margine viene ceduto a fine anno per ogni famiglia di prodotto. Aiuta a identificare se categorie a basso margine (es. Semi) sono eccessivamente caricate di premi rispetto ad altre.")
                 df_cat_health = df_dash.groupby('Categoria')['PFA_Tot'].mean().reset_index().sort_values('PFA_Tot', ascending=False)
                 fig_cat = px.bar(df_cat_health, x='Categoria', y='PFA_Tot', labels={'Categoria': 'Famiglia Prodotto', 'PFA_Tot': 'PFA Medio (%)'}, color='PFA_Tot', color_continuous_scale='Blues')
                 st.plotly_chart(fig_cat, use_container_width=True)
@@ -2265,7 +2742,7 @@ elif menu == "Report Sintetico":
 
     with st.container(border=True):
         st.markdown("#### Benchmark Comparativo di Canale (Livello Sottogruppo)")
-        st.markdown("Analisi strutturale delle asimmetrie commerciali.")
+        st.markdown("Analisi strutturale delle asimmetrie commerciali. Gli sconti sono collassati per destinazione logica. IN FASE DI TEST USARE EX.V. SAGRA CLASSICO Lt1")
         
         col_f1, col_f2 = st.columns(2)
         with col_f1:
@@ -2310,6 +2787,7 @@ elif menu == "Report Sintetico":
                     res_ins = cursor.fetchone()
                 
                 insegna_campione = res_ins[0] if res_ins else ""
+                
                 contratto_risolto = get_merged_contract(conn, g_macro, s_gruppo, insegna_campione, ean_bench, tipo_olio_bench)
                 
                 if contratto_risolto.listino_r is not None:
@@ -2404,6 +2882,9 @@ elif menu == "Report Sintetico":
                     p_ean, p_desc, p_tipo, p_min_g, p_sap, p_form, p_conf = p
                     resolved = get_merged_contract(conn, grp_rep_sel, sub_rep_sel, ass_rep_sel, p_ean, p_tipo)
                     
+                    if resolved.listino_r is None:
+                        resolved.listino_r = get_listino_strutturale(conn, grp_rep_sel, sub_rep_sel, p_ean)
+                    
                     if resolved.listino_r is not None:
                         input_calc = PricingInput(
                             listino_r=safe_dec(resolved.listino_r), sconto_1=safe_dec(resolved.sconto_1), sconto_2=safe_dec(resolved.sconto_2), sconto_3=safe_dec(resolved.sconto_3),
@@ -2448,202 +2929,138 @@ elif menu == "Report Sintetico":
                     wb.save(buffer_rep)
                     
                     st.download_button(
-                        label="SCARICA EXCEL",
+                        label=f"SCARICA EXCEL",
                         data=buffer_rep.getvalue(),
                         file_name=f"Sintesi_{ass_rep_sel}_{datetime.now().strftime('%Y%m%d')}.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        use_container_width=True,
-                        key="down_report_synt_excel_main_button"
+                        use_container_width=True
                     )
 
     conn.close()
-
 # ==========================================
-# SCHEDA 5: GUIDA OPERATIVA
+# SCHEDA 5: GUIDA OPERATIVA (MANUALE UTENTE COMPLETO)
 # ==========================================
 else:
-    st.title("📚 Manuale Operativo e Guida per Principianti")
-    st.markdown("""
-    Benvenuto nella **Guida Operativa del Bunker Commerciale Salov**. 
-    Questo modulo è stato progettato come un vero e proprio manuale didattico. È dedicato a chi si avvicina per la prima volta al controllo di gestione e alla negoziazione con la Grande Distribuzione Organizzata (GDO), o a chi non ha mai utilizzato questa applicazione.
+    st.title("📚 Manuale Operativo e Linee Guida")
+    st.markdown("### Guida all'uso di 'Bunker Commerciale - Salov'")
+    st.markdown("Benvenuto nel sistema aziendale per il governo della marginalità. Questa guida spiega le logiche di calcolo del software e fornisce le istruzioni passo-passo per condurre le simulazioni commerciali in totale sicurezza.")
     
-    Il manuale è suddiviso in 5 aree tematiche consultabili tramite le schede sottostanti.
-    """)
-    
-    tab_glossario, tab_gerarchia, tab_simulatore, tab_rinnovi, tab_manutenzione = st.tabs([
-        "1. L'ABC del Pricing GDO",
-        "2. Gerarchia & Ereditarietà dei Contratti",
-        "3. Simulatore Offerte (Passo-Dopo-Passo)",
-        "4. Rinnovi Contrattuali (Guida Strategica)",
-        "5. Gestione DB, Caricamenti & Back-Office"
-    ])
-    
-    # ----------------------------------------------------
-    # TAB 1: L'ABC DEL PRICING GDO (CONCETTI DI BASE)
-    # ----------------------------------------------------
-    with tab_glossario:
-        st.subheader("1. La 'Cascata di Pricing' e la Marginalità")
+    st.divider()
+
+    with st.expander("📖 1. GLOSSARIO: I termini tecnici da conoscere", expanded=True):
         st.markdown("""
-        Vendere un prodotto alla Grande Distribuzione (es. Coop, Conad, Esselunga) non significa scambiarlo ad un prezzo fisso. È un processo a tappe, assimilabile ad un **sistema di setacci sequenziali**. 
-        Partendo da un valore teorico iniziale, ogni accordo negoziato (sconti logistici, contributi promozionali, premi di fine anno) riduce il prezzo fino ad ottenere il ricavo reale dell'azienda.
-        
-        Ecco i concetti cardine analizzati dal software:
-        
-        *   **Listino Base (R):** È il prezzo ufficiale di partenza stabilito da Salov per ciascun prodotto. È un valore lordo, privo di sconti.
-        *   **Sconti in Fattura (On-Invoice):** Scontistiche percentuali che vengono applicate direttamente all'atto della fatturazione. Riducono l'importo imponibile della fattura.
-        *   **Oneri Logistici (AB) e di Pagamento (AC):** Trattenute che il cliente applica per remunerare la gestione centralizzata dei magazzini (logistica) o i termini di pagamento agevolati.
-        *   **Netto in Fattura 2 (AF):** È il valore finale che il cliente paga materialmente al momento della ricezione della fattura.
-        *   **Premi Fuori Fattura / Off-Invoice (AL o PFA):** Sono sconti "invisibili" sul prezzo a scaffale. Si tratta di contributi finanziari che Salov restituisce al distributore sotto forma di note di credito a scadenze prefissate (es. trimestrali o annuali) come premi di fine anno, contributi di inserimento o marketing.
-        *   **NET-NET FINALE (AM):** È l'effettivo ricavo che Salov conserva in cassa. Si ottiene sottraendo i Premi Fuori Fattura (AL) dal Netto in Fattura 2 (AF).
-        *   **Guardrail / Floor (G):** È la soglia minima di sicurezza finanziaria stabilita dalla Direzione. Rappresenta il costo industriale minimo di produzione incrementato di un margine di sopravvivenza aziendale. **Scendere sotto il Floor (G) significa distruggere valore ed operare in perdita commerciale.**
+        Per utilizzare correttamente il simulatore, è fondamentale condividere lo stesso vocabolario tecnico:
+
+        *   **Listino Base (R):** È il prezzo di listino ufficiale Salov, al lordo di qualsiasi sconto.
+        *   **Sconti in Fattura (S1... S7, Y, Z):** Sconti percentuali applicati direttamente in fattura. Riducono l'imponibile. Si dividono in *Centrali* (definiti dall'Accordo Quadro) e *Locali/Promo* (definiti per singole attività).
+        *   **Sconto Diretto (AA):** È un "Taglio Prezzo" espresso in Valore Assoluto (Euro), non in percentuale (es. -0,50 € a bottiglia).
+        *   **Oneri Logistici (AB) e di Pagamento (AC):** Trattenute percentuali applicate dal cliente per la gestione centralizzata del magazzino o per i flussi finanziari.
+        *   **Netto Fattura 2 (AF):** Il prezzo reale a cui il prodotto viene fatturato, calcolato dopo aver applicato tutti gli sconti e gli oneri.
+        *   **Premi Fuori Fattura / Off-Invoice (PFA):** (Voci I, II, III, ecc.). Sono i contributi di fine anno o fine periodo richiesti dalla GDO (es. premi di fine anno, contributi assortimento). *Riducono il nostro margine, ma non abbassano il prezzo a scaffale del cliente*.
+        *   **NET-NET FINALE (AM):** È il ricavo reale e pulito per l'azienda. Si ottiene sottraendo i PFA dal Netto Fattura.
+        *   **Minimo Net-Net:** È la soglia minima di redditività fissata dall'azienda per una specifica referenza. Scendere sotto questo valore significa vendere in perdita.
+        *   **Floor (G) / Guardrail Aziendale:** Rappresenta il limite fisico e invalicabile impostato dalla Direzione nel database, il "pavimento" sotto il quale il sistema blocca l'operazione. Agisce come un vero e proprio salvavita.
+            * *Esempio pratico:* Immagina che produrre, imbottigliare e consegnare una bottiglia di Extravergine costi 3,50 €. L'azienda fissa il Floor (G) a 3,80 € per garantirsi la sopravvivenza e coprire i costi fissi. Se durante una negoziazione concedi un mix di sconti, premi di fine anno e contributi volantino che fa crollare il tuo ricavo reale a 3,75 €, il sistema farà scattare il semaforo **ROSSO**. Ti avviserà immediatamente che stai "bucando il Floor", distruggendo valore per 0,05 € su ogni singola bottiglia venduta.
+        *   **Spazio Promo MAX (% o €):** Indica il margine di manovra residuo. È la differenza tra il prezzo simulato e il Floor minimo aziendale.
         """)
         
-        st.info("💡 **Differenza cruciale da memorizzare:** Gli sconti in fattura riducono il prezzo che il consumatore percepisce a scaffale; i Premi Fuori Fattura (PFA) riducono solo il ricavo reale trattenuto da Salov, lasciando il prezzo al pubblico inalterato.")
-        
-        st.subheader("2. Esempio Numerico di una Cascata di Pricing")
+    with st.expander("🧮 2. LA MECCANICA DEGLI SCONTI: La 'Cascata' e il Sell-Out", expanded=False):
         st.markdown("""
-        Vediamo come viene calcolato il **Net-Net Finale (AM)** passo dopo passo, ipotizzando una bottiglia con **Listino Base (R) di € 10,00**:
-        
-        1.  **Listino Base (R):** `€ 10,000`
-        2.  **Sconto 1 (10,00%):** Si applica il primo sconto.  
-            *Calcolo:* `10,00 * (1 - 0,10) = € 9,000`
-        3.  **Sconto 2 (5,00%):** Lo sconto successivo si applica **sul risultato del precedente** (effetto cascata geometrica, non somma algebrica).  
-            *Calcolo:* `9,00 * (1 - 0,05) = € 8,550` *(Nota: non è il 15% di 10,00, che sarebbe stato € 8,50!)*
-        4.  **Sconto Continuativo Y (2,00%):**  
-            *Calcolo:* `8,55 * (1 - 0,02) = € 8,379`
-        5.  **Sconto Unitario Diretto AA (€ 0,200):** Viene sottratto un valore assoluto in Euro.  
-            *Calcolo:* `8,379 - 0,200 = € 8,179`
-        6.  **Oneri Logistica AB (1,00%):**  
-            *Calcolo:* `8,179 * (1 - 0,01) = € 8,097` (Valore arrotondato al millesimo)
-        7.  **Netto in Fattura 2 (AF):** `€ 8,097`
-        8.  **Premi Fuori Fattura PFA (5,00% totali):** Si calcola la detrazione fuori fattura applicandola sul Netto in Fattura.  
-            *Calcolo:* `8,097 * (1 - 0,05) = € 7,692`
-        9.  **Net-Net Finale (AM):** **`€ 7,692`**
-        
-        **Verifica di Sicurezza (Guardrail):**  
-        Se per questo prodotto il **Floor (G)** è impostato a **€ 7,500**:  
-        *Confronto:* `€ 7,692 (AM) >= € 7,500 (G)` ➔ **STATO: VERDE (APPROVATO)**. Abbiamo generato un guadagno extra di `+€ 0,192` rispetto alla soglia di rischio.  
-        Se il Floor fosse stato impostato a **€ 7,800**:  
-        *Confronto:* `€ 7,692 (AM) < € 7,800 (G)` ➔ **STATO: ROSSO (BLOCCATO)**. L'operazione verrebbe bloccata dal sistema perché in perdita commerciale di `-€ 0,108` per unità.
+        **La Cascata Geometrica (Sconti in Fattura)**
+        Il software non fa mai la somma algebrica degli sconti in fattura (es. 10% + 5% NON fa 15%). Il calcolo è **sequenziale**: ogni sconto si calcola sul valore residuo lasciato dallo sconto precedente.
+
+        *Esempio di Calcolo in Fattura:*
+        *   **Listino Base:** 10,00 €
+        *   **Sconto 1 (10%):** 10,00 * (1 - 0.10) = **9,00 €**
+        *   **Sconto 2 (5%):** 9,00 * (1 - 0.05) = **8,55 €**
+        *   **Sconto Promo Z (10%):** 8,55 * (1 - 0.10) = **7,695 €**
+        *   **Sconto Diretto AA (-0,20 €):** 7,695 - 0,20 = **7,495 €**
+        *   **Oneri Logistica (2%):** 7,495 * (1 - 0.02) = **7,345 € (Netto Fattura)**
+
+        **La Somma Algebrica (Premi Fuori Fattura - PFA)**
+        A differenza degli sconti in fattura, i PFA si **sommano algebricamente** tra loro prima di essere applicati. Se hai un Premio Base del 2% e un Contributo Volantino dell'1%, il sistema calcolerà un 3% totale sul Netto Fattura.
+        *   *Calcolo Net-Net:* 7,345 € * (1 - 0.03) = **7,124 € (Net-Net Finale)**.
+
+        **I Contributi Extra (Sell-Out / Volantino)**
+        Se durante una promo concedi un contributo fisso (es. 500 € per una testata gondola) a fronte di 10.000 bottiglie stimate:
+        *   Impatto unitario: 500 € / 10.000 pz = **0,05 € a bottiglia**.
+        *   Il tuo Net-Net reale scenderà da 7,124 € a **7,074 €**. Il sistema calcola questo impatto per verificare che tu non scenda sotto il Floor minimo.
         """)
 
-    # ----------------------------------------------------
-    # TAB 2: GERARCHIA E EREDITARIEATÀ DEI CONTRATTI
-    # ----------------------------------------------------
-    with tab_gerarchia:
-        st.subheader("1. La Piramide delle Decisioni Commerciali")
+    with st.expander("🧬 3. LA GERARCHIA DEI CONTRATTI: La regola del 'Top-Down Lock'", expanded=False):
         st.markdown("""
-        Nel mondo della GDO, un contratto commerciale è strutturato come una piramide a 5 livelli. Per evitare di dover inserire a mano le stesse condizioni per ogni singola bottiglia e per ogni singolo negozio d'Italia, l'applicazione adotta una regola chiamata **Ereditarietà con Sovrascrittura dal Basso (Bottom-Up Override)**.
+        Il database contratti funziona con una logica a 5 livelli. Vige la regola del **Blocco dall'Alto (Top-Down Lock)**: se un livello superiore fissa una condizione, i livelli inferiori non possono modificarla o cancellarla.
         
-        I livelli contrattuali, dal più generale (in alto) al più specifico (in basso) sono:
-        
-        1.  **GRUPPO MACRO:** L'accordo quadro nazionale (es. *COOP ITALIA*). Definisce le condizioni generali.
-        2.  **SOTTOGRUPPO:** Accordi commerciali per consorzi o macro-aree geografiche (es. *COOP NORD OVEST*).
-        3.  **CATEGORIA:** Regole specifiche applicate ad intere famiglie di prodotti (es. tutti gli oli *EXTRAVERGINE*).
-        4.  **INSEGNA LOCALE:** Condizioni contrattate sul territorio per una singola catena distributiva (es. *IPERCOOP*).
-        5.  **REFERENZA:** Il livello massimo di dettaglio, legato al singolo codice a barre (EAN) del prodotto.
+        **I 5 Livelli (dal più forte al più debole):**
+        1. **GRUPPO MACRO** (es. *COOP ITALIA*) ➔ Accordo Quadro Nazionale.
+        2. **SOTTOGRUPPO** (es. *COOP NORD OVEST*) ➔ Accordi interregionali.
+        3. **CATEGORIA** (es. *EXTRAVERGINE*) ➔ Regole valide solo per una specifica famiglia di prodotti.
+        4. **ASSOCIATO / INSEGNA** (es. *IPERCOOP LOCALE*) ➔ Accordi del singolo punto vendita o associato.
+        5. **REFERENZA (EAN)** ➔ La singola bottiglia. Qui risiede il Listino Base (R).
+
+        **Casi Pratici di Inserimento Dati:**
+        *   **L'Ereditarietà (Cella Vuota):** Se il Gruppo Macro ha uno Sconto 1 del 10%, non serve riscriverlo sulle singole referenze. Lasciando la cella vuota, il sistema erediterà automaticamente il 10%.
+        *   **L'Override (Forzare l'esclusione):** Se una specifica referenza Premium NON deve ricevere lo Sconto 1 del 10% stabilito dal Gruppo, devi inserire esplicitamente il valore **`0.0`** nella riga di quella referenza. Questo `0.0` funge da scudo e blocca l'ereditarietà.
+        *   **Fuori Assortimento:** Se una referenza non ha un Listino Base (R) associato, il sistema la bloccherà indicando "Prodotto Fuori Assortimento".
         """)
         
-        st.subheader("2. Regole di Ereditarietà e Override: Come ragiona il software")
+    with st.expander("📞 4. COME USARE IL 'SIMULATORE OFFERTE' (Singola Referenza)", expanded=False):
         st.markdown("""
-        Per ricostruire il contratto di un cliente, il software effettua una ricerca partendo dal basso verso l'alto (dal livello 5 al livello 1):
+        Questa scheda è lo strumento tattico da usare durante una trattativa rapida su un singolo prodotto.
         
-        *   **Regola 1: Ereditarietà Automatica (Cella Vuota)**  
-            Se una cella a livello locale o di referenza viene lasciata **vuota (NULL)** nel database, il software risale la piramide fino a trovare il primo valore disponibile (es. ereditando lo sconto stipulato nell'accordo quadro di Gruppo Macro).
-        *   **Regola 2: Sovrascrittura Specifica (Override)**  
-            Se a livello di singola Referenza (Livello 5) o Insegna (Livello 4) viene inserito un valore esplicito, questo "blocca" la risalita. Quel valore specifico vince sulle condizioni generali del Gruppo Macro.
-        *   **Regola 3: Sbarramento a Zero (`0.0`)**  
-            Se un prodotto Premium non deve beneficiare di uno sconto del 10% stabilito a livello di Gruppo Macro, non è sufficiente lasciare la cella vuota (altrimenti erediterebbe il 10%). Occorre inserire esplicitamente **`0.0`** a livello di referenza. Lo `0.0` agisce come uno "scudo" e azzera lo sconto, bloccando l'ereditarietà.
+        **Modalità A: Partenza da Prezzo Target (Consigliata)**
+        Da usare quando il Buyer fissa un obiettivo di prezzo. Esempio: *"Voglio pagare questa bottiglia 3,80 € netti"*.
+        1. Seleziona la Modalità A.
+        2. Inserisci `3.80` nel campo "Prezzo Target Net Net".
+        3. Il sistema calcolerà automaticamente la percentuale esatta di **Sconto Promozionale [Z]** necessaria per arrivare a quel risultato; questo valore varia dinamicamente ma non è modificabile direttamante in quanto va a garantire il rispetto del limite net net pre impostato
+        4. Se 3,80 € è inferiore al minimo aziendale (Floor), il sistema mostrerà l'avviso in **ROSSO**, indicando la perdita esatta.
+        5. Le uniche leve utilizzabili sono lo Sconto continuativo % (da utilizzare previa verifica di accordo locale) e lo sconto unitario in fattura. Al variare di questi lo Sconto Promozionale si adatterà di conseguenza.
+
+        **Modalità B: Tentativi Spot Manuali**
+        Da usare per simulazioni libere.
+        1. Inserisci manualmente le percentuali di Sconto Promo [Z] o lo Sconto in Euro [AA].
+        2. Controlla i campi **Sconto Promo MAX** e **Sconto Unitario MAX**: ti indicano il limite massimo che puoi concedere prima che il semaforo diventi rosso.
+        """)
+        
+    with st.expander("📊 5. COME USARE LA 'MASTER GRID RINNOVI' (Simulazione N vs N+1)", expanded=False):
+        st.markdown("""
+        Questa scheda è lo strumento strategico per i rinnovi annuali. Permette di simulare l'intero portafoglio prodotti di un cliente in un'unica schermata, partendo dagli aggregati fino ad arrivare al dettaglio delle singole voci contrattuali.
+        
+        **Flusso di Lavoro Passo-Passo:**
+        
+        **FASE 1: Setup e Condizioni Globali**
+        1. **Identifica il Cliente:** Seleziona il *Gruppo GDO* e il *Sottogruppo* dai menu a tendina.
+        2. **Importa lo Storico:** Clicca su **"Carica Condizioni Attuali da DB"**. Il sistema popolerà le colonne dell'Anno [N] con i listini e gli sconti attualmente in vigore.
+        3. **Imposta gli Oneri Globali:** In cima al Tab 1, verifica e imposta lo **Sconto Carico Logistica (%)** e lo **Sconto Pagamento (%)**. *Attenzione: questi due valori vengono applicati a cascata su TUTTE le referenze attive e abbattono direttamente il Net Net finale.*
+
+        **FASE 2: Tab 1 - Griglia di Simulazione (Gli Aggregati)**
+        1. **Attiva le Referenze:** Inserisci i volumi previsti nella colonna `[N+1] Volumi`. *Il sistema calcolerà e mostrerà nei risultati SOLO le righe con volumi maggiori di zero.*
+        2. **Imposta i Target:** Agisci sulle colonne `[N+1] Listino €`, `[N+1] Sc. Fattura %` (il totale degli sconti in fattura) e `[N+1] Contratto %` (il totale dei premi fuori fattura).
+        3. **Calcola:** Clicca su **"🔄 Calcola Simulazione"**.
+        4. **Verifica lo Spazio Promo:** Controlla la colonna `Sc. Promo MAX [N+1] %`. Questo valore ti dice quanto sconto volantino potrai fare durante l'anno prima di bucare il limite minimo aziendale (Floor). Modifica i target finché non ottieni lo Spazio Promo desiderato.
+
+        **FASE 3: Tab 2 - Analisi Ponderata (L'Effetto "Pollo di Trilussa")**
+        In questa scheda vedi la sintesi economica. I risultati sono raggruppati per Categoria e Sub-Categoria. 
+        *Perché è fondamentale?* Un cliente potrebbe avere un margine totale positivo (Verde) perché muove enormi volumi di Olio di Semi, ma nascondere una forte perdita (Rosso) sugli Extravergini. Il sistema calcola la media ponderata sui volumi per evidenziare se un cluster specifico sta distruggendo valore.
+
+        **FASE 4: Tab 3 - Esplosione Sconti (Il Dettaglio Contrattuale)**
+        Una volta che i target aggregati nel Tab 1 ti soddisfano, devi "spacchettarli" nelle reali voci del contratto nazionale (S1, S2, PFA I, ecc.).
+        1. **Modifica Manuale:** Inserisci i valori noti (es. S1 al 10%, S2 al 2%).
+        2. **Verifica:** Clicca su **"🔄 Calcola e Verifica Sconti (Manuale)"**. Il sistema calcolerà la cascata geometrica e ti mostrerà sotto "Diff. Fattura" quanto manca per raggiungere il target che avevi fissato nel Tab 1.
+        3. **La Magia (Auto-Allineamento):** Non impazzire con la calcolatrice! Clicca su **"🪄 Allinea Sconti Automaticamente"**. Il sistema calcolerà l'esatta percentuale geometrica mancante e la inserirà in **S5 %**, portando la differenza a zero. Farà la stessa cosa per i premi fuori fattura, inserendo la differenza algebrica in **PFA V %**.
+        4. **Trucco:** se vuoi agire su uno dei due sconti in fattura presenti senza doverne creare un terzo (l'S5 della simulazione) azzera uno degli sconti contrattuali, avvia la simulazione e poi sostituisci la colonna dello sconto contrattuale che vuoi modificare con i valori in S5. Ripeti l'allineamento automatico per evidenziare eventuali errori. 
+        
+        *Nota: In ogni Tab è presente un pulsante per scaricare la tabella corrente in Excel.*
         """)
 
-    # ----------------------------------------------------
-    # TAB 3: GUIDA OPERATIVA: SIMULATORE OFFERTE
-    # ----------------------------------------------------
-    with tab_simulatore:
-        st.subheader("Guida d'Uso: Gestire una Trattativa Spot")
+    with st.expander("🗄️ 6. STORICO (CRM), REPORTISTICA E BACK-OFFICE", expanded=False):
         st.markdown("""
-        Questa scheda è lo strumento operativo ideale per supportare un venditore durante un incontro con il Buyer di un'insegna, quando è necessario simulare rapidamente l'impatto di un'offerta promozionale su una referenza.
-        
-        ### 🚶‍♂️ Guida Sequenziale Passo-Dopo-Passo:
-        
-        1.  **Imposta l'Anagrafica GDO:**  
-            Nel riquadro *Contesto Negoziale*, seleziona l'**Insegna Locale** dal primo menu a tendina.  
-            *Nota di Semplificazione:* Il software rileverà ed imposterà automaticamente nei campi adiacenti il **Gruppo GDO** e il **Sottogruppo** corrispondenti, leggendo le relazioni dal database in background.
-        2.  **Seleziona la Referenza:**  
-            Scegli il prodotto oggetto della negoziazione (es. *Ex.v. Sagra Classico lt.1*). Il sistema caricherà istantaneamente il Listino R e il Floor G di sicurezza.
-        3.  **Scegli l'Approccio Negoziale (Metodologia di Calcolo):**
-            *   **Approccio A (Partenza da Prezzo Target - Consigliato):** Il Buyer vi chiede di raggiungere un prezzo Net-Net specifico (es. *'Voglio pagare questa bottiglia € 3,90'*). Inserisci questo valore nel campo *PREZZO TARGET*. Il sistema calcolerà istantaneamente ed in automatico lo **Sconto Promo (Z)** esatto per centrare l'obiettivo.
-            *   **Approccio B (Tentativi Spot Manuali):** Inserisci liberamente le leve promozionali per fare simulazioni empiriche (es. impostando uno Sconto Promo Z del 10% e valutando il risultato).
-        4.  **Controlla i Limiti di Sicurezza:**  
-            Nel riquadro di destra, osserva i valori di *Sconto Promo MAX* e *Sconto Unitario MAX*. Ti indicano matematicamente il limite massimo concedibile oltre il quale andresti in perdita finanziaria.
-        5.  **Verifica il Semaforo Finanziario:**  
-            Guarda la sezione *Risultato Simulazione*:  
-            *   **VERDE:** Il margine è salvo. Viene visualizzato il Delta di guadagno positivo rispetto al limite.  
-            *   **ROSSO:** L'operazione è distruttiva per Salov. Viene indicato l'ammontare esatto della perdita unitaria.
-        6.  **Simula l'Impatto dei Contributi Extra (Sell-Out):**  
-            Se la promozione include un passaggio a volantino con costi promozionali accessori, compila il riquadro in basso inserendo i *Volumi Stimati*, il *Contributo Fisso* richiesto dall'insegna e il *Contributo a Pezzo*.  
-            *Esempio Numerico di Impatto Extra:*  
-            *   *Prezzo Net-Net Contrattuale (AM):* € 3,950  
-            *   *Volumi Stimati per il volantino:* 5.000 bottiglie  
-            *   *Contributo Fisso Esposizione:* € 500,00  
-            *   *Contributo extra a pezzo:* € 0,05  
-            *   *Impatto unitario del contributo fisso:* `500,00 / 5.000 = € 0,10`  
-            *   *Costo Extra Totale Unitario:* `0,10 (fisso) + 0,05 (variabile) = € 0,15`  
-            *   *Net-Net Effettivo Post-Promo:* `3,950 - 0,150 = € 3,800`. Il sistema ricalcolerà la sicurezza del margine su questo valore reale post-volantino.
-        7.  **Archiviazione o Esportazione:**  
-            Se la simulazione è soddisfacente, assegna uno stato ("Proposta" o "Confermata"), scrivi una nota nel CRM e clicca su **Salva Promozione** per memorizzarla nello storico. Se desideri presentare l'offerta al cliente, clicca su **Scarica Excel** per generare una proposta formale strutturata a livello grafico.
-        """)
-
-    # ----------------------------------------------------
-    # TAB 4: GUIDA OPERATIVA: RINNOVI CONTRATTUALI
-    # ----------------------------------------------------
-    with tab_rinnovi:
-        st.subheader("Guida Strategica: Gestire i Rinnovi di Fine Anno")
-        st.markdown("""
-        La **Tabella per i rinnovi contrattuali ** serve per gestire la pianificazione annuale (*Anno N+1*) per un intero cliente, monitorando la marginalità in tempo reale a livello consolidato.
-        
-        ### 🚶‍♂️ Guida Sequenziale Passo-Dopo-Passo:
-        
-        1.  **Definisci il Contesto di Partenza:**  
-            Seleziona il Gruppo-Sottogruppo oggetto di analisi. Clicca sul pulsante **Carica Condizioni Attuali da DB**. La griglia scaricherà in automatico i listini ufficiali e tutti gli sconti in vigore per l'anno in corso (Anno N), inserendoli como base di partenza.
-        2.  **Definisci i Volumi Obiettivo:**  
-            All'interno del **Tab 1 (Master Grid)**, inserisci nella colonna **[N+1] Volumi** le stime di vendita previste per l'anno futuro per ciascun prodotto.  
-            *Nota Importante:* Per ottimizzare l'analisi, le schede dei risultati e le medie ponderate prenderanno in considerazione esclusivamente i prodotti attivi (ovvero quelli con volumi futuri maggiori di zero).
-        3.  **Simula gli Scenari N+1 (Prezzi e Sconti target):**  
-            Puoi modificare direttamente le celle per ciascun prodotto, oppure puoi usare il pannello **Azioni Rapide e Aggiornamento Massivo** posto sopra la tabella per simulare manovre su intere categorie.  
-            *Esempio di Manovra Massiva:* Seleziona la categoria *Semi di Girasole*, seleziona il parametro *Aumento Listino Base (%)* e digita `5.0`. Cliccando su **Applica Valore**, tutti i listini della categoria saranno aumentati del 5% per l'anno N+1.
-        4.  **Valuta le Medie Ponderate nel Tab 2 (Analisi Ponderata):**  
-            Evita l'errore di valutare la redditività dei prodotti con una media semplice. Un cliente potrebbe avere 9 prodotti ampiamente in attivo (Verde) e un solo prodotto in forte perdita (Rosso). Tuttavia, se quel singolo prodotto rosso rappresenta il 90% delle merci acquistate dal cliente, Salov registrerà una perdita finanziaria complessiva.  
-            Il **Tab 2** applica la media ponderata sui volumi stimati per categoria e sotto-categoria, mostrandoti il reale impatto economico consolidato nel portafoglio del cliente.
-        5.  **Allineamento Automatico degli Sconti (Tab 3 - Esplosione Sconti):**  
-            Una volta concordati con il Buyer dei target macro per l'anno futuro (es. *'In fattura applicheremo uno sconto complessivo del 15% e fuori fattura i premi saranno del 5%'*), devi dividere questi valori negli sconti contrattuali reali (S1, S2, S3, S4, S5 per la fattura; PFA I-V per il fuori fattura) per consentire la corretta fatturazione amministrativa a SAP.
-            *   Sposta l'attenzione sul **Tab 3**.
-            *   Inserisci i valori degli sconti fissi che intendi mantenere invariati (es. impostando S1 al 5,00% e S2 al 3,00%).
-            *   Clicca sul pulsante **🪄 Allinea Sconti Automaticamente**.  
-            *   *Cosa accade in background?* Il software calcola in automatico la differenza geometrica necessaria a raggiungere lo sconto in fattura target e la inserisce nella cella **S5 %**. Calcola inoltre la differenza algebrica per i premi fuori fattura e la inserisce in **PFA V %**, azzerando gli scostamenti.
-            *   Clicca su **Calcola e Verifica Sconti** per memorizzare la configurazione di dettaglio.
-        """)
-
-    # ----------------------------------------------------
-    # TAB 5: GESTIONE DB, CARICAMENTI & BACK-OFFICE
-    # ----------------------------------------------------
-    with tab_manutenzione:
-        st.subheader("Manutenzione delle Tabelle e Integrità dei Dati")
-        st.markdown("""
-        Questa sezione è riservata agli utenti che devono occuparsi della manutenzione dei dati del sistema (es. aggiornamento annuale dei listini nazionali Salov, caricamento dei nuovi minimi net-net decisi dalla Direzione Finanziaria).
-        
-        ### ⚠️ La Trappola della Notazione Scientifica degli EAN (Excel)
-        Il codice EAN (codice a barre a 13 cifre, es. `8002210111110`) è memorizzato nel sistema come una stringa di testo.  
-        Quando si apre o si esporta un file in Microsoft Excel, quest'ultimo tende a interpretare le cifre dell'EAN come un numero enorme e lo converte automaticamente in formato scientifico (es. `8,00221E+12`).  
-        Se un file corrotto in questo modo viene re-importato nel Bunker, i codici a barre andranno persi e l'applicazione cesserà di funzionare.
-        
-        **🛡️ Linea Guida di Protezione:**  
-        Prima di salvare o importare un foglio Excel contenente i codici EAN, seleziona l'intera colonna dei codici a barre, fai clic destro ➔ *Formato Celle* ➔ Imposta come **Testo** (assicurandoti che le 13 cifre siano scritte per esteso e non contengano simboli come `+` o `E`). Il modulo di importazione è equipaggiato con una camera di decontaminazione che bloccherà l'upload in caso di anomalie, avvisandoti del pericolo.
-        
-        ### 🔄 Come eseguire un Caricamento Massivo:
-        1.  Accedi alla scheda **Back-Office (Contratti Nazionali)** o **Dati Anagrafici (Logistica)**.
-        2.  Utilizza il pulsante **Scarica Template** per ottenere la struttura esatta dei dati in formato Excel.
-        3.  Apri il file sul tuo computer, effettua le modifiche o aggiungi le nuove righe.
-        4.  Trascina il file nell'area di rilascio del caricamento (*Importazione Massiva*).
-        5.  Premi il pulsante **Conferma Scrittura** per aggiornare il database di produzione dell'applicazione.
+        *   **Storico Promozioni (CRM):** Ogni simulazione può essere salvata nel database (come "Proposta" o "Confermata"). In questa scheda puoi filtrare, consultare ed esportare in Excel tutte le trattative passate. Se hai commesso un errore, puoi eliminare il singolo record tramite il suo ID.
+        *   **Clona Promozione:** Nello Storico puoi selezionare una vecchia promo e cliccare "Clona". Il sistema ti riporterà al Simulatore precompilando tutti i campi, permettendoti di creare una nuova trattativa in pochi secondi.
+        *   **Report Sintetico:** Genera un file Excel consolidato per un intero cliente. Mostra l'allineamento di tutti i prezzi e sconti, evidenziando immediatamente le referenze approvate (Verdi) e quelle sotto soglia (Rosse). È il documento ideale da condividere con la Direzione Commerciale.
+        *   **Back-Office (Import/Export Excel):** Per aggiornare massivamente le anagrafiche, i guardrail (Floor) o i contratti quadro, non occorre farlo riga per riga a schermo.
+            1. Scarica il Template Excel.
+            2. Modifica i dati sul tuo computer. **ATTENZIONE:** Assicurati che in Excel la colonna degli EAN sia formattata come "Testo", altrimenti Excel trasformerà i codici a barre in numeri scientifici (es. 8,0022E+12) corrompendo il database.
+            3. Ricarica il file tramite l'apposito pulsante.
+        *   **Danger Zone (Reset):** Il pulsante di Reset nella barra laterale (protetto da password) cancella tutto il database e ricarica i dati finti di test. Da usare solo in fase di training o manutenzione.
         """)
