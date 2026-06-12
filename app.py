@@ -78,46 +78,155 @@ def get_subcat(row):
 # ==========================================
 st.markdown("""
 <style>
-    .block-container { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; max-width: 98% !important; }
-    .stApp { background-color: #F4F6F8 !important; } 
-    section[data-testid="stSidebar"] { background-color: #FFFFFF !important; border-right: 1px solid #E2E8F0 !important; }
-    h1, h2, h3 { color: #0F172A !important; font-family: 'Inter', 'Helvetica Neue', sans-serif !important; font-weight: 600 !important; letter-spacing: -0.5px; margin-bottom: 0.5rem !important; }
-    h4, h5, h6 { color: #334155 !important; font-weight: 600 !important; }
-    div[data-testid="stMetric"] { background-color: #FFFFFF; padding: 15px; border-radius: 8px; border: 1px solid #EAEAEA; box-shadow: 0 1px 3px rgba(0,0,0,0.05); text-align: center; }
-    div[data-testid="stMetricValue"] { color: #0F172A !important; font-weight: 700 !important; font-size: 1.6rem !important; }
-    div[data-testid="stMetricLabel"] { font-size: 0.85rem !important; color: #64748B !important; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
-    div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #FFFFFF !important; border-radius: 8px !important; border: 1px solid #E2E8F0 !important; box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important; padding: 15px !important; }
-    div[data-testid="stExpander"] { background-color: #FFFFFF !important; border: 1px solid #D1C9BC !important; border-radius: 8px !important; overflow: hidden; }
-    div[data-testid="stExpander"] summary { background-color: #F5F7F5 !important; font-weight: 600; color: #1A3E2F; }
-    .stButton>button[kind="primary"] { background-color: #166534 !important; color: #FFFFFF !important; font-weight: 600 !important; border-radius: 6px !important; border: none !important; padding: 0.5rem 1rem !important; }
-    .stButton>button[kind="primary"]:hover { background-color: #14532D !important; }
-    div[data-testid="stDataFrame"] { border-radius: 8px; border: 1px solid #E2E8F0; }
-    .alert-box { padding: 10px 15px; border-radius: 6px; font-size: 0.9rem; margin-bottom: 10px; border-left: 4px solid; }
-    .alert-warning { background-color: #FFFBEB; border-color: #F59E0B; color: #92400E; }
-    .alert-info { background-color: #F0F9FF; border-color: #0EA5E9; color: #075985; }
-    .alert-success { background-color: #F0FDF4; border-color: #22C55E; color: #166534; }
-    .alert-danger { background-color: #FEF2F2; border-color: #EF4444; color: #991B1B; }
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header[data-testid="stHeader"] { background: transparent !important; }
+    /* 1. IMPORTAZIONE DEI FONT AZIENDALI */
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-    /* REGOLE DI SPAZIATURA PER I GRUPPI DEL MENU PRINCIPALE (RADIO BUTTONS) */
-    div[role="radiogroup"] > label:nth-of-type(3),
-    div[role="radiogroup"] > div[data-baseweb="radio"]:nth-of-type(3) {
-        margin-bottom: 25px !important;
+    /* 2. REGOLE STRUTTURALI E COLORI DI SFONDO */
+    .block-container { 
+        padding-top: 2rem !important; 
+        padding-bottom: 2rem !important; 
+        max-width: 95% !important; 
     }
-    div[role="radiogroup"] > label:nth-of-type(6),
-    div[role="radiogroup"] > div[data-baseweb="radio"]:nth-of-type(6) {
-        margin-bottom: 25px !important;
+    
+    /* Sfondo principale crema "Natural BG" */
+    .stApp { 
+        background-color: #F7F7F2 !important; 
+        color: #2D3227 !important;
+        font-family: 'Inter', sans-serif !important;
+    } 
+
+    /* Sidebar con tonalità grigio-caldo */
+    section[data-testid="stSidebar"] { 
+        background-color: #F0F0E8 !important; 
+        border-right: 1px solid #E2E2D8 !important; 
     }
-    div[role="radiogroup"] > label:nth-of-type(7),
-    div[role="radiogroup"] > div[data-baseweb="radio"]:nth-of-type(7) {
-        margin-bottom: 25px !important;
+    section[data-testid="stSidebar"] .stMarkdown, section[data-testid="stSidebar"] label {
+        color: #2D3227 !important;
     }
-    div[role="radiogroup"] > label:nth-of-type(8),
-    div[role="radiogroup"] > div[data-baseweb="radio"]:nth-of-type(8) {
-        margin-bottom: 25px !important;
+
+    /* 3. TIPOGRAFIA */
+    h1, h2, h3 { 
+        color: #2D3227 !important; 
+        font-family: 'Space Grotesk', sans-serif !important; 
+        font-weight: 700 !important; 
+        letter-spacing: -0.03em !important; 
     }
+    h4, h5, h6 { 
+        color: #5A6340 !important; 
+        font-family: 'Space Grotesk', sans-serif !important;
+        font-weight: 600 !important; 
+    }
+    
+    /* Numeri e codici in font monospazio */
+    .font-mono, td, .stMetric div[data-testid="stMetricValue"] {
+        font-family: 'JetBrains Mono', monospace !important;
+    }
+
+    /* 4. METRICHE E CARTE (Componenti "Card") */
+    div[data-testid="stMetric"] { 
+        background-color: #FFFFFF !important; 
+        padding: 20px !important; 
+        border-radius: 16px !important; 
+        border: 1px solid #E2E2D8 !important; 
+        box-shadow: 0 1px 3px rgba(45,50,39,0.05) !important; 
+    }
+    div[data-testid="stMetricValue"] { 
+        color: #2D3227 !important; 
+        font-weight: 700 !important; 
+        font-size: 1.8rem !important; 
+    }
+    div[data-testid="stMetricLabel"] { 
+        font-size: 0.75rem !important; 
+        color: #7A7E72 !important; 
+        text-transform: uppercase !important; 
+        letter-spacing: 0.1em !important; 
+        font-weight: 700 !important; 
+    }
+
+    /* Contenitori generici (st.container con border=True) */
+    div[data-testid="stVerticalBlockBorderWrapper"] { 
+        background-color: #FFFFFF !important; 
+        border-radius: 16px !important; 
+        border: 1px solid #E2E2D8 !important; 
+        box-shadow: 0 1px 4px rgba(0,0,0,0.02) !important; 
+        padding: 20px !important; 
+    }
+
+    /* 5. PULSANTI (Stile primario Verde Oliva) */
+    .stButton>button[kind="primary"] { 
+        background-color: #5A6340 !important; 
+        color: #FFFFFF !important; 
+        font-family: 'Space Grotesk', sans-serif !important;
+        font-weight: 700 !important; 
+        border-radius: 12px !important; 
+        border: none !important; 
+        padding: 0.6rem 1.2rem !important; 
+        box-shadow: 0 2px 4px rgba(90,99,64,0.15) !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+    .stButton>button[kind="primary"]:hover { 
+        background-color: #495033 !important; 
+        transform: translateY(-1px) !important;
+    }
+    
+    /* Pulsanti secondari */
+    .stButton>button[kind="secondary"] { 
+        background-color: #FFFFFF !important; 
+        color: #2D3227 !important; 
+        border: 1px solid #E2E2D8 !important;
+        border-radius: 12px !important;
+        font-family: 'Space Grotesk', sans-serif !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+    .stButton>button[kind="secondary"]:hover { 
+        background-color: #F0F0E8 !important; 
+        border-color: #7A7E72 !important;
+    }
+
+    /* 6. TAB DI NAVIGAZIONE (Stile minimale a pillola) */
+    button[data-baseweb="tab"] {
+        font-family: 'Space Grotesk', sans-serif !important;
+        font-weight: 700 !important;
+        font-size: 0.85rem !important;
+        color: #7A7E72 !important;
+        border: none !important;
+        padding: 8px 16px !important;
+    }
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #5A6340 !important;
+        background-color: #DDE2C6 !important;
+        border-radius: 8px !important;
+    }
+
+    /* 7. SCROLLBARS PERSONALIZZATE */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #F7F7F2;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #E2E2D8;
+        border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #7A7E72;
+    }
+
+    /* 8. BOX DI ALLERTA MODIFICATI */
+    .alert-box { 
+        padding: 12px 18px; 
+        border-radius: 12px; 
+        font-size: 0.85rem; 
+        margin-bottom: 12px; 
+        border-left: 4px solid; 
+    }
+    .alert-warning { background-color: #FAF2F0; border-color: #A34A3F; color: #4D1A16; } /* Adattato a toni caldi autunnali */
+    .alert-info { background-color: #F0F0E8; border-color: #8A9A5B; color: #2D3227; }
+    .alert-success { background-color: #E9F2E9; border-color: #5A6340; color: #202418; }
+    .alert-danger { background-color: #FAF2F0; border-color: #A34A3F; color: #4D1A16; }
 </style>
 """, unsafe_allow_html=True)
 
