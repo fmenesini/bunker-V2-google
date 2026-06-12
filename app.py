@@ -31,22 +31,26 @@ OPERATIVE_COLS = [
 ]
 
 def fmt_it(val, decimals=2, is_euro=False, is_pct=False, sign=False):
-    if pd.isna(val): return ""
-    if sign:
-        s = f"{val:+,.{decimals}f}"
-    else:
-        s = f"{val:,.{decimals}f}"
-    s = s.replace(",", "X").replace(".", ",").replace("X", ".")
-    if is_euro: return f"€ {s}"
-    if is_pct: return f"{s} %"
-    return s
+    if pd.isna(val) or val is None: return ""
+    try:
+        val_f = float(val)
+        if sign:
+            s = f"{val_f:+,.{decimals}f}"
+        else:
+            s = f"{val_f:,.{decimals}f}"
+        s = s.replace(",", "X").replace(".", ",").replace("X", ".")
+        if is_euro: return f"€ {s}"
+        if is_pct: return f"{s} %"
+        return s
+    except Exception:
+        return str(val)
 
 def safe_dec(val):
     if pd.isna(val) or val is None or str(val).strip() == "":
         return Decimal("0.00")
     try:
         return Decimal(str(val))
-    except:
+    except Exception:
         return Decimal("0.00")
 
 def get_subcat(row):
@@ -134,6 +138,19 @@ def init_db():
     cursor.execute("CREATE TABLE IF NOT EXISTS struttura_gdo (id INTEGER PRIMARY KEY AUTOINCREMENT, gruppo_macro TEXT, sottogruppo TEXT, associato_insegna TEXT, attivo BOOLEAN DEFAULT 0, UNIQUE(gruppo_macro, sottogruppo, associato_insegna))")
     cursor.execute("CREATE TABLE IF NOT EXISTS accordi_commerciali (id INTEGER PRIMARY KEY AUTOINCREMENT, gruppo_macro TEXT, sottogruppo TEXT, associato_insegna TEXT, livello TEXT, chiave_livello TEXT, listino_r REAL, sconto_1 REAL, sconto_2 REAL, sconto_3 REAL, sconto_4 REAL, sconto_5 REAL, sconto_6 REAL, sconto_7 REAL, sconto_y REAL, sconto_carico REAL, sconto_pagamento REAL, voce_contratto_1 REAL, voce_contratto_2 REAL, voce_contratto_3 REAL, voce_contratto_4 REAL, voce_contratto_5 REAL, note_locali TEXT, UNIQUE(gruppo_macro, sottogruppo, associato_insegna, livello, chiave_livello))")
     cursor.execute("CREATE TABLE IF NOT EXISTS storico_promo (id INTEGER PRIMARY KEY AUTOINCREMENT, data_salvataggio TIMESTAMP DEFAULT CURRENT_TIMESTAMP, stato_promo TEXT, gruppo_macro TEXT, sottogruppo TEXT, associato_insegna TEXT, ean TEXT, descrizione_commerciale TEXT, listino_r REAL, sconto_y REAL, sconto_z REAL, sconto_aa REAL, net_net_am REAL, volumi_stimati INTEGER, contributo_fisso REAL, contributo_pezzo REAL, costo_totale_extra REAL, note TEXT, sell_in_dal DATE, sell_in_al DATE, sell_out_dal DATE, sell_out_al DATE, min_net_net_g REAL, net_net_post_promo REAL)")
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS proposte_rinnovi (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, 
+            data_salvataggio TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+            nome_proposta TEXT, 
+            gruppo_macro TEXT, 
+            sottogruppo TEXT, 
+            associato_insegna TEXT, 
+            global_carico REAL, 
+            global_pagamento REAL, 
+            dati_json TEXT
+        )
+    """)
     conn.commit()
 
     migrazioni = [
@@ -273,6 +290,71 @@ def seed_baseline_data(conn):
         ("8002210130197", "60000589", "ACETO", "FBERIO ACE BALS BOT V6x500ML IT", "Aceto Balsamico F.Berio lt.0,50", 0.5, 2.10, "Vetro lt 0,50", 6, 31, 5, 155, 61, 41)
     ]
     
+    for p in prodotti_salov:
+        cursor.execute("""
+        INSERT OR REPLACE INTO anagrafica_master (
+            ean, codice_sap, tipo_olio, descrizione_sap, descrizione_commerciale, formato_lt, confezione,
+            pezzi_cartone, cartoni_strato, strati_pallet, cartoni_pallet, conservazione_mesi, shelf_life_mesi
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (p[0], p[1], p[2], p[3], p[4], p[5], p[7], p[8], p[9], p[10], p[11], p[12], p[13]))
+        
+        cursor.execute("INSERT OR REPLACE INTO guardrail_aziendali (ean, min_net_net_g) VALUES (?, ?)", (p[0], p[6]))
+        
+    gdo_structure = [
+        ("SELEX GRUPPO COMMERCIALE", "", "ALFI"), ("SELEX GRUPPO COMMERCIALE", "", "DIMAR"), ("SELEX GRUPPO COMMERCIALE", "", "ITALBRIX"), ("SELEX GRUPPO COMMERCIALE", "", "RIALTO"), ("SELEX GRUPPO COMMERCIALE", "", "ALÌ"), ("SELEX GRUPPO COMMERCIALE", "", "ARCA COMMERCIALE"), ("SELEX GRUPPO COMMERCIALE", "", "SUPERMERCATI CADORO"), ("SELEX GRUPPO COMMERCIALE", "", "MAXI DÌ"), ("SELEX GRUPPO COMMERCIALE", "", "UNICOMM"), ("SELEX GRUPPO COMMERCIALE", "", "CE.DI. GROS"), ("SELEX GRUPPO COMMERCIALE", "", "CE.DI MARCHE"), ("SELEX GRUPPO COMMERCIALE", "", "GMF GRANDI MAGAZZINI FIORONI"), ("SELEX GRUPPO COMMERCIALE", "", "MAGAZZINI GABRIELLI"), ("SELEX GRUPPO COMMERCIALE", "", "L’ABBONDANZA"), ("SELEX GRUPPO COMMERCIALE", "", "SUPER ELITE"), ("SELEX GRUPPO COMMERCIALE", "", "SUPEREMME"), ("SELEX GRUPPO COMMERCIALE", "", "CDS"), ("SELEX GRUPPO COMMERCIALE", "", "MEGAMARK"),
+        ("GRUPPO VÉGÉ", "", "AMERICAN CASH"), ("GRUPPO VÉGÉ", "", "APULIA DISTRIBUZIONE"), ("GRUPPO VÉGÉ", "", "ASTA"), ("GRUPPO VÉGÉ", "", "BAVA"), ("GRUPPO VÉGÉ", "", "BENNET"), ("GRUPPO VÉGÉ", "", "CAPUTO SAVERIO & FIGLI"), ("GRUPPO VÉGÉ", "", "CARAMICO GAETANO & C."), ("GRUPPO VÉGÉ", "", "CENTRODET"), ("GRUPPO VÉGÉ", "", "COAL"), ("GRUPPO VÉGÉ", "", "COLONIAL SUD"), ("GRUPPO VÉGÉ", "", "DETERCART LOMBARDO"), ("GRUPPO VÉGÉ", "", "ERREGI"), ("GRUPPO VÉGÉ", "", "F.LLI ARENA"), ("GRUPPO VÉGÉ", "", "F.LLI MORGESE"), ("GRUPPO VÉGÉ", "", "GAMBARDELLA"), ("GRUPPO VÉGÉ", "", "GARGIULO & MAIELLO"), ("GRUPPO VÉGÉ", "", "GDA"), ("GRUPPO VÉGÉ", "", "GENERAL TRADE"), ("GRUPPO VÉGÉ", "", "G.F.E."), ("GRUPPO VÉGÉ", "", "GRD"), ("GRUPPO VÉGÉ", "", "GROSSY"), ("GRUPPO VÉGÉ", "", "I.S.A."), ("GRUPPO VÉGÉ", "", "MARKET INGROSS"), ("GRUPPO VÉGÉ", "", "MIGROSS"), ("GRUPPO VÉGÉ", "", "MODERNA 2020"), ("GRUPPO VÉGÉ", "", "MULTICEDI"), ("GRUPPO VÉGÉ", "", "MULTICEDI MCN"), ("GRUPPO VÉGÉ", "", "ROSSI"), ("GRUPPO VÉGÉ", "", "SCELGO"), ("GRUPPO VÉGÉ", "", "SI.D.I. PICCOLO"), ("GRUPPO VÉGÉ", "", "SUPERMERCATI TOSANO CEREA"), ("GRUPPO VÉGÉ", "", "VEGA"),
+        ("CONAD", "CONAD SOTTOGRUPPO", "CONAD CENTRO NORD"), ("CONAD", "CONAD SOTTOGRUPPO", "COMMERCIANTI INDIPENDENTI ASSOCIATI (CIA)"), ("CONAD", "CONAD SOTTOGRUPPO", "CONAD NORD OVEST"), ("CONAD", "CONAD SOTTOGRUPPO", "CONAD ADRIATICO"), ("CONAD", "CONAD SOTTOGRUPPO", "PAC 2000A"),
+        ("COOP ITALIA", "COOP ITALIA SOTTOGRUPPO", "COOP ALLEANZA 3.0"), ("COOP ITALIA", "COOP ITALIA SOTTOGRUPPO", "COOP LIGURIA"), ("COOP ITALIA", "COOP ITALIA SOTTOGRUPPO", "NOVA COOP"), ("COOP ITALIA", "COOP ITALIA SOTTOGRUPPO", "COOP LOMBARDIA"), ("COOP ITALIA", "COOP ITALIA SOTTOGRUPPO", "UNICOOP FIRENZE"), ("COOP ITALIA", "COOP ITALIA SOTTOGRUPPO", "UNICOOP ETRURIA"), ("COOP ITALIA", "COOP ITALIA SOTTOGRUPPO", "COOP RENO"), ("COOP ITALIA", "COOP ITALIA SOTTOGRUPPO", "COOP UNIONE AMIATINA"), ("COOP ITALIA", "COOP ITALIA SOTTOGRUPPO", "SAIT COOP"),
+        ("C3", "", "BRENDOLAN ALIMENTARI"), ("C3", "", "C.D. GEST"), ("C3", "", "COLLE VERDE"), ("C3", "", "D’AMBROS IPERMERCATO"), ("C3", "", "GROS CIDAC"), ("C3", "", "GRUPPO BRIÒ"), ("C3", "", "ITALCASH"), ("C3", "", "LANDO F.LLI"), ("C3", "", "LANZA COMMERCIO DETERGENZA"), ("C3", "", "LEKKERLAND ITALIA"), ("C3", "", "LEM MARKET"), ("C3", "", "PERRONE"), ("C3", "", "PREMIUM PRICE ITALIA"), ("C3", "", "RETAILPRO"), ("C3", "", "SCUDO"), ("C3", "", "SUPERMERCATI GRISI"), ("C3", "", "SUPERMERCATI MARTINELLI"), ("C3", "", "SUPERMERCATI VISOTTO"), ("C3", "", "TO.CAL"), ("C3", "", "VIVO FRIULI VENEZIA GIULIA"),
+        ("AGORÀ NETWORK", "", "GRUPPO POLI"), ("AGORÀ NETWORK", "", "IPERAL SUPERMERCATI"), ("AGORÀ NETWORK", "", "ROSSETTO TRADE"), ("AGORÀ NETWORK", "", "SOGEGROSS"), ("AGORÀ NETWORK", "", "TIGROS"),
+        ("CRAI GRUPPO", "CRAI SOTTOGRUPPO", "SILDA"), ("CRAI GRUPPO", "CRAI SOTTOGRUPPO", "CRAI MEDITERRANEA"), ("CRAI GRUPPO", "CRAI SOTTOGRUPPO", "DISTRIBUZIONE SICILIANO"), ("CRAI GRUPPO", "CRAI SOTTOGRUPPO", "CRAI TIRRENO"), ("CRAI GRUPPO", "CRAI SOTTOGRUPPO", "ARCEV"), ("CRAI GRUPPO", "CRAI SOTTOGRUPPO", "CODÈ CRAI OVEST"), ("CRAI GRUPPO", "CRAI SOTTOGRUPPO", "F.LLI IBBA"), ("CRAI GRUPPO", "CRAI SOTTOGRUPPO", "AMA CRAI EST"), ("CRAI GRUPPO", "CRAI SOTTOGRUPPO", "SUPERCENTRO"),
+        ("DESPAR SERVIZI", "", "MAIORA"), ("DESPAR SERVIZI", "", "ERGON"), ("DESPAR SERVIZI", "", "FIORINO"), ("DESPAR SERVIZI", "", "SCS-SUPERMERCATI CONSORZIATI SARDEGNA"), ("DESPAR SERVIZI", "", "CENTRO 3A"),
+        ("D.IT DISTRIBUZIONE ITALIANA", "", "CE.DI. SIGMA CAMPANIA"), ("D.IT DISTRIBUZIONE ITALIANA", "", "CONSORZIO EUROPA"), ("D.IT DISTRIBUZIONE ITALIANA", "", "LOMBARDI & C."), ("D.IT DISTRIBUZIONE ITALIANA", "", "REALCO"), ("D.IT DISTRIBUZIONE ITALIANA", "", "SAN FRANCESCO"), ("D.IT DISTRIBUZIONE ITALIANA", "", "SISA SICILIA"), ("D.IT DISTRIBUZIONE ITALIANA", "", "EUROPA COMMERCIALE"), ("D.IT DISTRIBUZIONE ITALIANA", "", "LE DELIZIE DEL SUD"), ("D.IT DISTRIBUZIONE ITALIANA", "", "VA.PA."),
+        ("EUROSPIN", "", "SPESA INTELLIGENTE"), ("EUROSPIN", "", "EUROSPIN TIRRENICA"), ("EUROSPIN", "", "EUROSPIN LAZIO"), ("EUROSPIN", "", "EUROSPIN PUGLIA"), ("EUROSPIN", "", "EUROSPIN SICILIA"),
+        ("CONSORZIO CORALIS", "", "ALIM GROSS"), ("CONSORZIO CORALIS", "", "CDC"), ("CONSORZIO CORALIS", "", "D.IN.AL."), ("CONSORZIO CORALis", "", "DUECI"), ("CONSORZIO CORALIS", "", "FILICE GIOVANNI"), ("CONSORZIO CORALIS", "", "FILICE GROUP"), ("CONSORZIO CORALIS", "", "GIGANTE ALIMENTARI"), ("CONSORZIO CORALIS", "", "GSD"), ("CONSORZIO CORALIS", "", "LA PRIMA"), ("CONSORZIO CORALIS", "", "LOMBARDO"), ("CONSORZIO CORALIS", "", "MAGNONE PIÙ"), ("CONSORZIO CORALIS", "", "MERIDIO"), ("CONSORZIO CORALIS", "", "PASCAR"), ("CONSORZIO CORALIS", "", "PREZZEMOLO&VITALE"), ("CONSORZIO CORALIS", "", "TUTTODISTRIBUZIONE"), ("CONSORZIO CORALIS", "", "VICINO A TE"),
+        ("GRUPPO FINIPER CANOVA", "", "IPER MONTEBELLO"), ("GRUPPO FINIPER CANOVA", "", "UNES"),
+        ("ESSELUNGA GRUPPO", "ESSELUNGA SOTTOGRUPPO", "ESSELUNGA"),
+        ("PAM GRUPPO", "PAM SOTTOGRUPPO", "PAM"),
+        ("SELEX GRUPPO", "SELEX SOTTOGRUPPO", "SELEX ")
+    ]
+    cursor.executemany("INSERT INTO struttura_gdo (gruppo_macro, sottogruppo, associato_insegna) VALUES (?, ?, ?)", gdo_structure)
+    
+    demo_insegne = ['COOP ALLEANZA 3.0', 'CONAD ADRIATICO', 'ESSELUNGA', 'SELEX ', 'PAM', 'CRAI TIRRENO']
+    for ins in demo_insegne:
+        cursor.execute("UPDATE struttura_gdo SET attivo=1 WHERE associato_insegna=?", (ins,))
+        
+    fallback_data = [
+        ('COOP ITALIA', '', '', 'GRUPPO', '', None, 20.0, 30.0, None, None, None, None, None, None, 1.5, 1.0, 14.0, 8.0, None, None, None, None),
+        ('COOP ITALIA', 'COOP ITALIA SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 66.00, None, None, None, None, None, None, 12.0, 5.0, None, None, None, None, None, None, None, None),
+        ('COOP ITALIA', 'COOP ITALIA SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 60.80, None, None, None, None, None, None, 15.0, 0.0, None, None, None, None, None, None, None, None),
+        ('COOP ITALIA', 'COOP ITALIA SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 43.20, None, None, None, None, None, None, 12.0, 0.0, None, None, None, None, None, None, None, None),
+
+        ('ESSELUNGA GRUPPO', '', '', 'GRUPPO', '', None, 35.0, 15.0, None, None, None, None, None, None, 1.2, 1.0, 12.0, 5.0, None, None, None, None),
+        ('ESSELUNGA GRUPPO', 'ESSELUNGA SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 40.00, None, None, None, None, None, None, 10.0, 7.0, None, None, None, None, None, None, None, None),
+        ('ESSELUNGA GRUPPO', 'ESSELUNGA SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 38.00, None, None, None, None, None, None, 55.0, 0.0, None, None, None, None, None, None, None, None),
+        ('ESSELUNGA GRUPPO', 'ESSELUNGA SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 24.00, None, None, None, None, None, None, 13.0, 0.0, None, None, None, None, None, None, None, None),
+
+        ('CONAD', '', '', 'GRUPPO', '', None, 17.0, 18.0, None, None, None, None, None, None, 1.5, 1.0, 9.0, 11.0, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 50.00, None, None, None, None, None, None, 12.0, 9.0, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 44.00, None, None, None, None, None, None, 11.0, 4.0, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 30.00, None, None, None, None, None, None, 10.0, 4.0, None, None, None, None, None, None, None, None),
+
+        ('SELEX GRUPPO', '', '', 'GRUPPO', '', None, 17.0, 18.0, None, None, None, None, None, None, 1.5, 1.0, 9.0, 11.0, None, None, None, None),
+        ('SELEX GRUPPO', 'SELEX SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 50.00, None, None, None, None, None, None, 12.0, 9.0, None, None, None, None, None, None, None, None),
+        ('SELEX GRUPPO', 'SELEX SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 44.00, None, None, None, None, None, None, 11.0, 4.0, None, None, None, None, None, None, None, None),
+        ('SELEX GRUPPO', 'SELEX SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 30.00, None, None, None, None, None, None, 10.0, 4.0, None, None, None, None, None, None, None, None),
+        
+        ('PAM GRUPPO', '', '', 'GRUPPO', '', None, 15.0, 20.0, None, None, None, None, None, None, 1.4, 1.0, 11.0, 6.0, None, None, None, None),
+        ('PAM GRUPPO', 'PAM SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 52.00, None, None, None, None, None, None, 14.0, 6.0, None, None, None, None, None, None, None, None),
+        ('PAM GRUPPO', 'PAM SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 48.00, None, None, None, None, None, None, 13.0, 3.0, None, None, None, None, None, None, None, None),
+        ('PAM GRUPPO', 'PAM SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 32.00, None, None, None, None, None, None, 9.0, 3.0, None, None, None, None, None, None, None, None),
+
+        ('CRAI GRUPPO', '', '', 'GRUPPO', '', None, 12.0, 25.0, None, None, None, None, None, None, 2.0, 1.0, 7.0, 12.0, None, None, None, None),
+        ('CRAI GRUPPO', 'CRAI SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 56.00, None, None, None, None, None, None, 15.0, 8.0, None, None, None, None, None, None, None, None),
+        ('CRAI GRUPPO', 'CRAI SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 50.00, None, None, None, None, None, None, 12.0, 5.0, None, None, None, None, None, None, None, None),
+        ('CRAI GRUPPO', 'CRAI SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 35.00, None, None, None, None, None, None, 11.0, 5.0, None, None, None, None, None, None, None, None)
+    ]
+    
     cursor.executemany("""
     INSERT OR REPLACE INTO accordi_commerciali (
         gruppo_macro, sottogruppo, associato_insegna, livello, chiave_livello, listino_r,
@@ -351,7 +433,7 @@ if menu == "Simulatore Offerte":
     cursor.execute("SELECT DISTINCT gruppo_macro FROM struttura_gdo WHERE attivo=1 ORDER BY gruppo_macro")
     gruppi = [r[0] for r in cursor.fetchall()]
     
-    if not gruppi:
+    if not grupos_attivi := gruppi:
         st.warning("Nessun cliente attivo. Vai in 'Anagrafica GDO' per attivare le insegne.")
         st.stop()
 
@@ -1891,362 +1973,7 @@ elif menu == "Dati Anagrafici (Logistica)":
     conn.close()
 
 # ==========================================
-# SCHEDA 3: BACK-OFFICE CONTRATTI (NAZIONALI)
-# ==========================================
-elif menu == "Back-Office (Contratti Nazionali)":
-    st.title("Back-Office - Contratti Nazionali")
-    st.markdown("Gestione degli accordi strutturali (Listini, S1-S5, PFA) a livello di Gruppo e Sottogruppo. **Gli sconti locali si inseriscono nella scheda apposita.**")
-    conn = sqlite3.connect(DB_FILE)
-    
-    # --- INSERIMENTO RAPIDO REGOLA NAZIONALE ---
-    cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT gruppo_macro FROM struttura_gdo WHERE attivo=1 ORDER BY gruppo_macro")
-    gruppi_attivi = [r[0] for r in cursor.fetchall()]
-    
-    cursor.execute("SELECT DISTINCT tipo_olio FROM anagrafica_master")
-    categorie_disponibili = [r[0] for r in cursor.fetchall()]
-    
-    cursor.execute("SELECT ean, descrizione_commerciale FROM anagrafica_master")
-    prod_list = [f"{r[1]} [{r[0]}]" for r in cursor.fetchall()]
-    
-    with st.container(border=True):
-        st.markdown("#### ➕ Inserimento Rapido Regola Nazionale")
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            ins_gruppo = st.selectbox("Gruppo", gruppi_attivi, key="ins_g")
-            
-            # Filtro reattivo sui sottogruppi
-            cursor.execute("""
-                SELECT DISTINCT sottogruppo FROM accordi_commerciali 
-                WHERE gruppo_macro=? AND sottogruppo != '' AND sottogruppo IS NOT NULL
-                UNION
-                SELECT DISTINCT sottogruppo FROM struttura_gdo 
-                WHERE gruppo_macro=? AND sottogruppo != '' AND sottogruppo IS NOT NULL
-                ORDER BY sottogruppo
-            """, (ins_gruppo, ins_gruppo))
-            sottogruppi_attivi_del_gruppo = [r[0] for r in cursor.fetchall()]
-            
-            ins_sottogruppo = st.selectbox(
-                "Sottogruppo", 
-                [""] + sottogruppi_attivi_del_gruppo, 
-                key="ins_sg"
-            )
-            
-        with col2:
-            ins_livello = st.selectbox("Livello Regola", ["GRUPPO", "SOTTOGRUPPO", "CATEGORIA", "REFERENZA"], key="ins_l")
-            
-            if ins_livello == "CATEGORIA":
-                ins_chiave = st.selectbox("Seleziona Categoria", categorie_disponibili, key="ins_c_cat")
-            elif ins_livello == "REFERENZA":
-                ins_chiave = st.selectbox("Seleziona Referenza", prod_list, key="ins_c_ref")
-            else:
-                st.info(f"Regola applicata a tutto il {ins_livello}")
-                ins_chiave = ""
-            
-        with col3:
-            ins_parametro = st.selectbox("Parametro da Impostare", [
-                "Listino Base (R)", "Sconto 1", "Sconto 2", "Sconto 3", "Sconto 4", "Sconto 5",
-                "Oneri Logistica", "Oneri Pagamento", 
-                "PFA Voce I", "PFA Voce II", "PFA Voce III", "PFA Voce IV", "PFA Voce V"
-            ], key="ins_p")
-            ins_valore = st.number_input("Valore", step=0.5, format="%.2f", key="ins_v")
-            
-        with col4:
-            st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
-            if st.button("Inserisci / Aggiorna Regola", type="primary", use_container_width=True):
-                chiave_pulita = ""
-                if ins_livello == "CATEGORIA":
-                    chiave_pulita = ins_chiave
-                elif ins_livello == "REFERENZA":
-                    chiave_pulita = ins_chiave.split("[")[-1].replace("]", "").strip() if "[" in ins_chiave else ins_chiave
-                
-                col_map = {
-                    "Listino Base (R)": "listino_r", "Sconto 1": "sconto_1", "Sconto 2": "sconto_2",
-                    "Sconto 3": "sconto_3", "Sconto 4": "sconto_4", "Sconto 5": "sconto_5",
-                    "Oneri Logistica": "sconto_carico", "Oneri Pagamento": "sconto_pagamento",
-                    "PFA Voce I": "voce_contratto_1", "PFA Voce II": "voce_contratto_2", 
-                    "PFA Voce III": "voce_contratto_3", "PFA Voce IV": "voce_contratto_4", "PFA Voce V": "voce_contratto_5"
-                }
-                col_name = col_map[ins_parametro]
-                
-                try:
-                    with conn:
-                        cursor.execute("SELECT id FROM accordi_commerciali WHERE gruppo_macro=? AND sottogruppo=? AND associato_insegna='' AND livello=? AND chiave_livello=?", (ins_gruppo, ins_sottogruppo, ins_livello, chiave_pulita))
-                        row = cursor.fetchone()
-                        if row:
-                            cursor.execute(f"UPDATE accordi_commerciali SET {col_name}=? WHERE id=?", (ins_valore, row[0]))
-                        else:
-                            cursor.execute(f"INSERT INTO accordi_commerciali (gruppo_macro, sottogruppo, associato_insegna, livello, chiave_livello, {col_name}) VALUES (?, ?, '', ?, ?, ?)", (ins_gruppo, ins_sottogruppo, ins_livello, chiave_pulita, ins_valore))
-                    st.success("Regola salvata!")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Errore: {e}")
-    # -------------------------------------------
-    
-    tab_contratti, tab_guardrail = st.tabs(["Gestione Contratti Nazionali", "Gestione Minimi Net Net"])
-    
-    with tab_contratti:
-        with st.container(border=True):
-            st.markdown("#### Modifica Diretta dei Contratti in Database")
-            
-            # Ordinamento automatico integrato nella query
-            df_database_editor = pd.read_sql_query("""
-                SELECT a.id, a.gruppo_macro, a.sottogruppo, a.livello, a.chiave_livello,
-                       CASE 
-                            WHEN a.livello = 'REFERENZA' THEN p.descrizione_commerciale 
-                            WHEN a.livello = 'CATEGORIA' THEN 'Categoria: ' || a.chiave_livello
-                            ELSE 'Contratto Quadro'
-                       END as descrizione_prodotto,
-                       a.listino_r,
-                       a.sconto_1, a.sconto_2, a.sconto_3, a.sconto_4, a.sconto_5,
-                       a.sconto_carico, a.sconto_pagamento, a.voce_contratto_1, a.voce_contratto_2, a.voce_contratto_3,
-                       a.voce_contratto_4, a.voce_contratto_5
-                FROM accordi_commerciali a
-                LEFT JOIN anagrafica_master p ON a.chiave_livello = p.ean AND a.livello = 'REFERENZA'
-                WHERE a.associato_insegna = '' OR a.associato_insegna IS NULL
-                ORDER BY a.gruppo_macro ASC, a.sottogruppo ASC, 
-                    CASE a.livello
-                        WHEN 'GRUPPO' THEN 1
-                        WHEN 'SOTTOGRUPPO' THEN 2
-                        WHEN 'CATEGORIA' THEN 3
-                        WHEN 'REFERENZA' THEN 4
-                        ELSE 5
-                    END ASC
-            """, conn)
-            
-            edited_df = st.data_editor(
-                df_database_editor, 
-                num_rows="dynamic", 
-                use_container_width=True,
-                hide_index=True,
-                disabled=["descrizione_prodotto"],
-                key="db_data_editor"
-            )
-            
-            if st.button("SALVA MODIFICHE CONTRATTI NAZIONALI", type="primary"):
-                cursor = conn.cursor()
-                try:
-                    with conn:
-                        cursor.execute("DELETE FROM accordi_commerciali WHERE associato_insegna = '' OR associato_insegna IS NULL")
-                        for _, r in edited_df.iterrows():
-                            def check_nan(val):
-                                return float(val) if (pd.notna(val) and str(val).strip() != "") else None
-                            
-                            cursor.execute("""
-                            INSERT OR REPLACE INTO accordi_commerciali (
-                                id, gruppo_macro, sottogruppo, associato_insegna, livello, chiave_livello, listino_r,
-                                sconto_1, sconto_2, sconto_3, sconto_4, sconto_5,
-                                sconto_carico, sconto_pagamento, voce_contratto_1, voce_contratto_2, voce_contratto_3,
-                                voce_contratto_4, voce_contratto_5
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                            """, (
-                                check_nan(r.get("id")),
-                                str(r.get("gruppo_macro")).upper().strip() if pd.notna(r.get("gruppo_macro")) else "",
-                                str(r.get("sottogruppo")).upper().strip() if pd.notna(r.get("sottogruppo")) else "",
-                                "", 
-                                str(r.get("livello")).upper().strip() if pd.notna(r.get("livello")) else "GRUPPO",
-                                str(r.get("chiave_livello")).strip() if pd.notna(r.get("chiave_livello")) else "",
-                                check_nan(r.get("listino_r")),
-                                check_nan(r.get("sconto_1")), check_nan(r.get("sconto_2")), check_nan(r.get("sconto_3")),
-                                check_nan(r.get("sconto_4")), check_nan(r.get("sconto_5")),
-                                check_nan(r.get("sconto_carico")), check_nan(r.get("sconto_pagamento")),
-                                check_nan(r.get("voce_contratto_1")), check_nan(r.get("voce_contratto_2")), check_nan(r.get("voce_contratto_3")),
-                                check_nan(r.get("voce_contratto_4")), check_nan(r.get("voce_contratto_5"))
-                            ))
-                    st.success("Contratti Nazionali aggiornati correttamente.")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Errore durante l'elaborazione: {e}")
-
-        col_b1, col_b2 = st.columns(2)
-        
-        with col_b1:
-            with st.container(border=True):
-                st.markdown("#### Esportazione Contratti Nazionali")
-                
-                query_accordi = """
-                SELECT a.gruppo_macro as GRUPPO_MACRO, a.sottogruppo as SOTTOGRUPPO,
-                       a.livello as LIVELLO, a.chiave_livello as CHIAVE_LIVELLO,
-                       CASE 
-                            WHEN a.livello = 'REFERENZA' THEN p.descrizione_commerciale 
-                            WHEN a.livello = 'CATEGORIA' THEN 'Accordo di Categoria: ' || a.chiave_livello
-                            ELSE 'Contratto Quadro'
-                       END as DESCRIZIONE_PRODOTTO,
-                       a.listino_r as LISTINO_BASE_R,
-                       a.sconto_1 as SCONTO_1, a.sconto_2 as SCONTO_2, a.sconto_3 as SCONTO_3, a.sconto_4 as SCONTO_4, a.sconto_5 as SCONTO_5,
-                       a.sconto_carico as SCONTO_CARICO_LOGISTICA, a.sconto_pagamento as SCONTO_PAGAMENTO_AC,
-                       a.voce_contratto_1 as PFA_VOCE_I, a.voce_contratto_2 as PFA_VOCE_II,
-                       a.voce_contratto_3 as PFA_VOCE_III, a.voce_contratto_4 as PFA_VOCE_IV, a.voce_contratto_5 as PFA_VOCE_V
-                FROM accordi_commerciali a
-                LEFT JOIN anagrafica_master p ON a.chiave_livello = p.ean AND a.livello = 'REFERENZA'
-                WHERE a.associato_insegna = '' OR a.associato_insegna IS NULL
-                """
-                df_accordi = pd.read_sql_query(query_accordi, conn)
-                
-                colonne_ordinate = [
-                    "GRUPPO_MACRO", "SOTTOGRUPPO", "LIVELLO", "CHIAVE_LIVELLO", "DESCRIZIONE_PRODOTTO",
-                    "LISTINO_BASE_R", "SCONTO_1", "SCONTO_2", "SCONTO_3", "SCONTO_4", "SCONTO_5",
-                    "SCONTO_CARICO_LOGISTICA", "SCONTO_PAGAMENTO_AC",
-                    "PFA_VOCE_I", "PFA_VOCE_II", "PFA_VOCE_III", "PFA_VOCE_IV", "PFA_VOCE_V"
-                ]
-                df_accordi = df_accordi[colonne_ordinate]
-                
-                buffer_export = io.BytesIO()
-                with pd.ExcelWriter(buffer_export, engine='openpyxl') as writer:
-                    df_accordi.to_excel(writer, index=False, sheet_name="Accordi_Nazionali")
-                    
-                st.download_button(
-                    label="Scarica Template Nazionali (Excel)",
-                    data=buffer_export.getvalue(),
-                    file_name=f"Backup_Contratti_Nazionali_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-
-        with col_b2:
-            with st.container(border=True):
-                st.markdown("#### Importazione Massiva Contratti Nazionali")
-                uploaded_file = st.file_uploader("Trascina il file Excel Contratti (.xlsx)", type=["xlsx"])
-                
-                if uploaded_file is not None:
-                    if st.button("Conferma Scrittura Contratti Nazionali"):
-                        try:
-                            df_import = pd.read_excel(uploaded_file)
-                            colonne_obbligatorie = ["GRUPPO_MACRO", "SOTTOGRUPPO", "LIVELLO", "CHIAVE_LIVELLO"]
-                            
-                            df_import = DataSanitizer.sanitize_excel_import(df_import, expected_columns=colonne_obbligatorie)
-                            
-                            cursor = conn.cursor()
-                            righe_inserite = 0
-                            
-                            with conn:
-                                for idx, row in df_import.iterrows():
-                                    gruppo = str(row["GRUPPO_MACRO"]).upper().strip()
-                                    sottogruppo = str(row["SOTTOGRUPPO"]).upper().strip() if (pd.notna(row.get("SOTTOGRUPPO")) and str(row.get("SOTTOGRUPPO")).strip() != "") else ""
-                                    livello = str(row["LIVELLO"]).upper().strip()
-                                    chiave_livello = str(row["CHIAVE_LIVELLO"]).strip() if pd.notna(row["CHIAVE_LIVELLO"]) else ""
-                                    
-                                    if livello == "REFERENZA" and chiave_livello:
-                                        chiave_livello = str(chiave_livello).split('.')[0].zfill(13)
-
-                                    def to_float_or_none(val):
-                                        if pd.isna(val) or str(val).strip() == "": return None
-                                        try: return float(val)
-                                        except: return None
-
-                                    cursor.execute("""
-                                    INSERT OR REPLACE INTO accordi_commerciali (
-                                        gruppo_macro, sottogruppo, associato_insegna, livello, chiave_livello, listino_r,
-                                        sconto_1, sconto_2, sconto_3, sconto_4, sconto_5,
-                                        sconto_carico, sconto_pagamento,
-                                        voce_contratto_1, voce_contratto_2, voce_contratto_3, voce_contratto_4, voce_contratto_5
-                                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                                    """, (
-                                        gruppo, sottogruppo, "", livello, chiave_livello, to_float_or_none(row.get("LISTINO_BASE_R")),
-                                        to_float_or_none(row.get("SCONTO_1")), to_float_or_none(row.get("SCONTO_2")), to_float_or_none(row.get("SCONTO_3")),
-                                        to_float_or_none(row.get("SCONTO_4")), to_float_or_none(row.get("SCONTO_5")),
-                                        to_float_or_none(row.get("SCONTO_CARICO_LOGISTICA")),
-                                        to_float_or_none(row.get("SCONTO_PAGAMENTO_AC")), to_float_or_none(row.get("PFA_VOCE_I")),
-                                        to_float_or_none(row.get("PFA_VOCE_II")), to_float_or_none(row.get("PFA_VOCE_III")),
-                                        to_float_or_none(row.get("PFA_VOCE_IV")), to_float_or_none(row.get("PFA_VOCE_V"))
-                                    ))
-                                    righe_inserite += 1
-                            st.success(f"Elaborate {righe_inserite} regole commerciali.")
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"Errore durante l'importazione: {e}")
-
-    with tab_guardrail:
-        st.markdown("Minimi Net Net €/pz per Referenza")
-        with st.container(border=True):
-            st.markdown("#### Modifica Diretta Guardrail")
-            
-            df_guardrail = pd.read_sql_query("""
-                SELECT g.ean, a.descrizione_commerciale, g.min_net_net_g
-                FROM guardrail_aziendali g
-                LEFT JOIN anagrafica_master a ON g.ean = a.ean
-            """, conn)
-            
-            edited_guardrail = st.data_editor(
-                df_guardrail, 
-                num_rows="dynamic", 
-                use_container_width=True,
-                hide_index=True,
-                disabled=["descrizione_commerciale"],
-                column_config={
-                    "min_net_net_g": st.column_config.NumberColumn("Min Net Net (€)", format="€ %.2f", step=0.01)
-                },
-                key="guardrail_editor"
-            )
-            
-            if st.button("SALVA MODIFICHE GUARDRAIL", type="primary"):
-                cursor = conn.cursor()
-                try:
-                    with conn:
-                        cursor.execute("DELETE FROM guardrail_aziendali")
-                        for _, r in edited_guardrail.iterrows():
-                            cursor.execute("INSERT INTO guardrail_aziendali (ean, min_net_net_g) VALUES (?, ?)", (str(r.get("ean")).strip(), float(r.get("min_net_net_g", 0.0))))
-                    st.success("Guardrail aggiornati.")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Errore salvataggio guardrail: {e}")
-
-        col_g1, col_g2 = st.columns(2)
-        
-        with col_g1:
-            with st.container(border=True):
-                st.markdown("#### Esportazione Guardrail")
-                
-                buffer_guardrail = io.BytesIO()
-                with pd.ExcelWriter(buffer_guardrail, engine='openpyxl') as writer:
-                    df_guardrail.to_excel(writer, index=False, sheet_name="Guardrail_NetNet")
-                    
-                st.download_button(
-                    label="Scarica Guardrail (Excel)",
-                    data=buffer_guardrail.getvalue(),
-                    file_name=f"Guardrail_Minimi_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-
-        with col_g2:
-            with st.container(border=True):
-                st.markdown("#### Importazione Massiva Guardrail")
-                uploaded_guardrail = st.file_uploader("Trascina il file Excel Guardrail (.xlsx)", type=["xlsx"], key="up_guardrail")
-                
-                if uploaded_guardrail is not None:
-                    if st.button("Conferma Scrittura Guardrail"):
-                        try:
-                            df_g_import = pd.read_excel(uploaded_guardrail)
-                            df_g_import.rename(columns=lambda x: str(x).upper().strip(), inplace=True)
-                            df_g_import = DataSanitizer.sanitize_excel_import(df_g_import)
-                            df_g_import.columns = [str(c).lower().strip() for c in df_g_import.columns]
-                            
-                            if "ean" not in df_g_import.columns or "min_net_net_g" not in df_g_import.columns:
-                                st.error("Il file Excel deve contenere le colonne 'ean' e 'min_net_net_g'.")
-                            else:
-                                cursor = conn.cursor()
-                                righe_inserite = 0
-                                
-                                with conn:
-                                    for idx, row in df_g_import.iterrows():
-                                        ean_val = str(row.get("ean", "")).split('.')[0].zfill(13)
-                                        if not ean_val or ean_val == "0000000000000" or ean_val == "nan": continue
-                                            
-                                        min_g = row.get("min_net_net_g", 0.0)
-                                        try: min_g = float(str(min_g).replace(',', '.'))
-                                        except: min_g = 0.0
-                                            
-                                        cursor.execute("INSERT OR REPLACE INTO guardrail_aziendali (ean, min_net_net_g) VALUES (?, ?)", (ean_val, min_g))
-                                        righe_inserite += 1
-                                        
-                                st.success(f"Aggiornati {righe_inserite} limiti minimi.")
-                                st.rerun()
-                        except Exception as e:
-                            st.error(f"Errore durante l'importazione: {e}")
-
-    conn.close()
-
-# ==========================================
-# SCHEDA 3.1: ACCORDI LOCALI (PROMO)
+# SCHEDA 2.5: ACCORDI LOCALI (PROMO)
 # ==========================================
 elif menu == "Accordi Locali (Promo)":
     st.title("Accordi Locali (Insegne / Associati)")
@@ -2338,7 +2065,7 @@ elif menu == "Accordi Locali (Promo)":
             buffer_locali = io.BytesIO()
             with pd.ExcelWriter(buffer_locali, engine='openpyxl') as writer:
                 df_locali.to_excel(writer, index=False, sheet_name="Accordi_Locali")
-            st.download_button("Scarica Accordi Locali (Excel)", buffer_locali.getvalue(), f"Accordi_Locali_{datetime.now().strftime('%Y%m%d')}.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            st.download_button("Scarica Accordi Locali (Excel)", buffer_locali.getvalue(), f"Accordi_Locali_{datetime.now().strftime('%Y%m%d')}.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="down_accordi_locali_sheet_key")
             
     with col_l2:
         with st.container(border=True):
@@ -2725,7 +2452,8 @@ elif menu == "Report Sintetico":
                         data=buffer_rep.getvalue(),
                         file_name=f"Sintesi_{ass_rep_sel}_{datetime.now().strftime('%Y%m%d')}.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        use_container_width=True
+                        use_container_width=True,
+                        key="down_report_synt_excel_main_button"
                     )
 
     conn.close()
