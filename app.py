@@ -1018,7 +1018,7 @@ if menu == "Simulatore Offerte":
     totals={"marker":{"color":"#5A6340"}}       # Verde oliva scuro (Salov Primary)
 ))
 
-fig.update_layout(
+    fig.update_layout(
     title="Evoluzione del Margine Unitario (€)", 
     waterfallgap=0.2, 
     margin=dict(t=40, b=40, l=40, r=40), 
