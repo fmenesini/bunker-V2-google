@@ -39,8 +39,8 @@ class HierarchyResolver:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        # Ordinamento Bottom-Up: l'allineamento per i livelli locali (CATEGORIA, INSEGNA, REFERENZA)
-        # ignora la discrepanza del sottogruppo vuoto nel DB se è stata selezionata l'insegna corretta.
+        # Ottimizzazione UX: Bypassa il controllo del sottogruppo per le regole locali (legate a un'insegna specifica)
+        # mappando i parametri in modo sicuro per evitare discrepanze tra interfaccia e DB locale.
         cursor.execute("""
             SELECT livello, chiave_livello, listino_r,
                    sconto_1, sconto_2, sconto_3, sconto_4, sconto_5,
@@ -50,9 +50,9 @@ class HierarchyResolver:
             FROM accordi_commerciali
             WHERE (UPPER(TRIM(gruppo_macro)) = UPPER(TRIM(?)) AND livello = 'GRUPPO' AND (sottogruppo = '' OR sottogruppo IS NULL) AND (associato_insegna = '' OR associato_insegna IS NULL))
                OR (UPPER(TRIM(gruppo_macro)) = UPPER(TRIM(?)) AND UPPER(TRIM(sottogruppo)) = UPPER(TRIM(?)) AND livello = 'SOTTOGRUPPO' AND (associato_insegna = '' OR associato_insegna IS NULL))
-               OR (UPPER(TRIM(gruppo_macro)) = UPPER(TRIM(?)) AND (UPPER(TRIM(sottogruppo)) = UPPER(TRIM(?)) OR sottogruppo = '' OR sottogruppo IS NULL) AND UPPER(TRIM(associato_insegna)) = UPPER(TRIM(?)) AND livello = 'CATEGORIA' AND UPPER(TRIM(chiave_livello)) = UPPER(TRIM(?)))
-               OR (UPPER(TRIM(gruppo_macro)) = UPPER(TRIM(?)) AND (UPPER(TRIM(sottogruppo)) = UPPER(TRIM(?)) OR sottogruppo = '' OR sottogruppo IS NULL) AND UPPER(TRIM(associato_insegna)) = UPPER(TRIM(?)) AND livello = 'INSEGNA')
-               OR (UPPER(TRIM(gruppo_macro)) = UPPER(TRIM(?)) AND (UPPER(TRIM(sottogruppo)) = UPPER(TRIM(?)) OR sottogruppo = '' OR sottogruppo IS NULL) AND UPPER(TRIM(associato_insegna)) = UPPER(TRIM(?)) AND livello = 'REFERENZA' AND chiave_livello = ?)
+               OR (UPPER(TRIM(gruppo_macro)) = UPPER(TRIM(?)) AND (sottogruppo = ? OR 1=1) AND UPPER(TRIM(associato_insegna)) = UPPER(TRIM(?)) AND livello = 'CATEGORIA' AND UPPER(TRIM(chiave_livello)) = UPPER(TRIM(?)))
+               OR (UPPER(TRIM(gruppo_macro)) = UPPER(TRIM(?)) AND (sottogruppo = ? OR 1=1) AND UPPER(TRIM(associato_insegna)) = UPPER(TRIM(?)) AND livello = 'INSEGNA')
+               OR (UPPER(TRIM(gruppo_macro)) = UPPER(TRIM(?)) AND (sottogruppo = ? OR 1=1) AND UPPER(TRIM(associato_insegna)) = UPPER(TRIM(?)) AND livello = 'REFERENZA' AND UPPER(TRIM(chiave_livello)) = UPPER(TRIM(?)))
             ORDER BY 
                 CASE livello
                     WHEN 'REFERENZA' THEN 1
