@@ -1,6 +1,7 @@
 [theme]
-primaryColor = "#D32F2F"
-backgroundColor = "#FCFAF7"
-secondaryBackgroundColor = "#F5F3EE"
-textColor = "#1C1C1C"
+primaryColor = "#5A6340"
+backgroundColor = "#F7F7F2"
+secondaryBackgroundColor = "#F0F0E8"
+textColor = "#2D3227"
 font = "sans serif"
+base = "light" # <--- Forza la base chiara su qualsiasi dispositivo
