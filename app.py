@@ -283,8 +283,8 @@ st.markdown("""
         color: #2D3227 !important;
     }
     
-    /* Popover dei menu a tendina (React Portals di Uber BaseWeb) */
-    div[data-baseweb="popover"] *, div[role="listbox"] *, ul[role="listbox"] * {
+    /* Popover dei menu a tendina (Selezionatori) */
+    div[data-baseweb="popover"] *, div[role="listbox"] * {
         background-color: #FFFFFF !important;
         color: #2D3227 !important;
     }
@@ -292,6 +292,17 @@ st.markdown("""
     /* Allineamento dei testi interni dei componenti st.expander */
     div[data-testid="stExpander"] * {
         color: #2D3227 !important;
+    }
+
+    /* FORZA IL TESTO DELLE OPZIONI DEI RADIO BUTTONS (st.radio) E CHECKBOX (st.checkbox) A RESTARE SCURO */
+    div[data-testid="stRadio"] *, 
+    div[data-baseweb="radio"] *, 
+    label[data-baseweb="radio"] *,
+    div[data-testid="stCheckbox"] *,
+    div[data-baseweb="select"] *,
+    div[class*="select"] * {
+        color: #2D3227 !important;
+        -webkit-text-fill-color: #2D3227 !important; /* Forza iOS Safari */
     }
 </style>
 """, unsafe_allow_html=True)
@@ -2049,7 +2060,7 @@ elif menu == "Dati Anagrafici (Logistica)":
                             str(r.get("confezione")).strip(),
                             check_nan_int(r.get("pezzi_cartone")),
                             check_nan_int(r.get("cartoni_strato")),
-                            check_nan_int(r.get("strati_pallet")),
+                            check_nan_int(r.get("stari_pallet")),
                             check_nan_int(r.get("cartoni_pallet")),
                             check_nan_int(r.get("conservazione_mesi")),
                             check_nan_int(r.get("shelf_life_mesi"))
@@ -2618,7 +2629,7 @@ elif menu == "Accordi Locali (Promo)":
                         with conn:
                             for _, r in df_imp_locali.iterrows():
                                 raw_chiave = str(r.get("prodotto_ean"))
-                                if "[" in raw_chiave and "]" in raw_chiave:
+                                if "[" in expandable_check and "]" in raw_chiave:
                                     chiave_pulita = raw_chiave.split("[")[-1].replace("]", "").strip()
                                 else:
                                     chiave_pulita = raw_chiave.strip()
@@ -3014,7 +3025,7 @@ else:
 
         *   **Listino Base (R):** È il prezzo di listino ufficiale Salov, al lordo di qualsiasi sconto.
         *   **Sconti in Fattura (S1... S7, Y, Z):** Sconti percentuali applicati direttamente in fattura. Riducono l'imponibile. Si dividono in *Centrali* (definiti dall'Accordo Quadro) e *Locali/Promo* (definiti per singole attività).
-        *   **Sconto Diretto (AA):** È un "Taglio Prezzo" espresso in Valore Assoluto (Euro), non in percentuale (es. -0,50 € a bottiglia).
+        *   **Sconto Diretto (AA):** È un "Taglio Prezzo" espresso in Valore Absoluto (Euro), non in percentuale (es. -0,50 € a bottiglia).
         *   **Oneri Logistici (AB) e di Pagamento (AC):** Trattenute percentuali applicate dal cliente per la gestione centralizzata del magazzino o per i flussi finanziari.
         *   **Netto Fattura 2 (AF):** Il prezzo reale a cui il prodotto viene fatturato, calcolato dopo aver applicato tutti gli sconti e gli oneri.
         *   **Premi Fuori Fattura / Off-Invoice (PFA):** (Voci I, II, III, ecc.). Sono i contributi di fine anno o fine periodo richiesti dalla GDO (es. premi di fine anno, contributi assortimento). *Riducono il nostro margine, ma non abbassano il prezzo a scaffale del cliente*.
@@ -3117,7 +3128,7 @@ else:
     with st.expander("🗄️ 6. STORICO (CRM), REPORTISTICA E BACK-OFFICE", expanded=False):
         st.markdown("""
         *   **Storico Promozioni (CRM):** Ogni simulazione può essere salvata nel database (come "Proposta" o "Confermata"). In questa scheda puoi filtrare, consultare ed esportare in Excel tutte le trattative passate. Se hai commesso un errore, puoi eliminare il singolo record tramite il suo ID.
-        *   **Clona Promozione:** Nello Storico puoi selezionare una vecchia promo e cliccare "Clona". Il sistema ti riporterà al Simulatore precompilando tutti i campi, permettendoti di creare una nuova trattativa in pochi secondi.
+        *   **Clona Promozione:** Nello Storico puoi selezionare una vecchia promo e cliccare "Clona". Il sistema ti riporterà al Simulatore precompilando tutti i campi, permettendoti di creare una nuova trattativa in secondi.
         *   **Report Sintetico:** Genera un file Excel consolidato per un intero cliente. Mostra l'allineamento di tutti i prezzi e sconti, evidenziando immediatamente le referenze approvate (Verdi) e quelle sotto soglia (Rosse). È il documento ideale da condividere con la Direzione Commerciale.
         *   **Back-Office (Import/Export Excel):** Per aggiornare massivamente le anagrafiche, i guardrail (Floor) o i contratti quadro, non occorre farlo riga per riga a schermo.
             1. Scarica il Template Excel.
