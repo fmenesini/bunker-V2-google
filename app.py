@@ -108,7 +108,7 @@ st.markdown("""
     }
     
     /* Sfondo principale crema "Natural BG" */
-    .stApp { 
+    .stApp, .stApp [data-testid="stAppViewContainer"] { 
         background-color: #F7F7F2 !important; 
         color: #2D3227 !important;
         font-family: 'Inter', sans-serif !important;
@@ -242,7 +242,7 @@ st.markdown("""
         margin-bottom: 12px; 
         border-left: 4px solid; 
     }
-    .alert-warning { background-color: #FAF2F0; border-color: #A34A3F; color: #4D1A16; } /* Adattato a toni caldi autunnali */
+    .alert-warning { background-color: #FAF2F0; border-color: #A34A3F; color: #4D1A16; } 
     .alert-info { background-color: #F0F0E8; border-color: #8A9A5B; color: #2D3227; }
     .alert-success { background-color: #E9F2E9; border-color: #5A6340; color: #202418; }
     .alert-danger { background-color: #FAF2F0; border-color: #A34A3F; color: #4D1A16; }
@@ -265,6 +265,34 @@ st.markdown("""
     .badge-insegna { background-color: #FAF2F0 !important; color: #8A3830 !important; border: 1px solid #EAD0CC; }
     .badge-referenza { background-color: #DDE2C6 !important; color: #495033 !important; border: 1px solid #C4CCA0; }
     .badge-nessuno { background-color: #E2E2D8 !important; color: #7A7E72 !important; border: 1px solid #D6D6CC; }
+
+    /* 10. PREVENZIONE DEL CONFLITTO DI CONTRASTO NEI WIDGET NATIVI */
+    /* Forza il testo scuro e lo sfondo chiaro nei moduli di immissione e tendine */
+    div[data-baseweb="select"] > div, 
+    div[data-baseweb="input"] > div,
+    input, 
+    select, 
+    textarea {
+        background-color: #FFFFFF !important;
+        color: #2D3227 !important;
+        -webkit-text-fill-color: #2D3227 !important; /* Forza iOS Safari */
+    }
+    
+    /* Forza il colore scuro per i placeholder e le etichette dei campi */
+    label[data-testid="stWidgetLabel"] p, label[data-testid="stWidgetLabel"] span {
+        color: #2D3227 !important;
+    }
+    
+    /* Popover dei menu a tendina (React Portals di Uber BaseWeb) */
+    div[data-baseweb="popover"] *, div[role="listbox"] *, ul[role="listbox"] * {
+        background-color: #FFFFFF !important;
+        color: #2D3227 !important;
+    }
+    
+    /* Allineamento dei testi interni dei componenti st.expander */
+    div[data-testid="stExpander"] * {
+        color: #2D3227 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
