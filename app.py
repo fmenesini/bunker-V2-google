@@ -169,7 +169,8 @@ st.markdown("""
     }
 
     /* 5. PULSANTI (Stile primario Verde Oliva) */
-    button[kind="primary"] { 
+    button[kind="primary"], 
+    button[kind="primaryFormSubmit"] { 
         background-color: #5A6340 !important; 
         color: #FFFFFF !important; 
         font-family: 'Space Grotesk', sans-serif !important;
@@ -182,7 +183,10 @@ st.markdown("""
     }
     button[kind="primary"]:hover, 
     button[kind="primary"]:active, 
-    button[kind="primary"]:focus { 
+    button[kind="primary"]:focus,
+    button[kind="primaryFormSubmit"]:hover,
+    button[kind="primaryFormSubmit"]:active,
+    button[kind="primaryFormSubmit"]:focus { 
         background-color: #495033 !important; 
         border-color: #495033 !important;
         color: #FFFFFF !important;
@@ -190,7 +194,8 @@ st.markdown("""
     }
     
     /* Pulsanti secondari */
-    button[kind="secondary"] { 
+    button[kind="secondary"],
+    button[kind="secondaryFormSubmit"] { 
         background-color: #FFFFFF !important; 
         color: #2D3227 !important; 
         border: 1px solid #E2E2D8 !important;
@@ -201,7 +206,10 @@ st.markdown("""
     }
     button[kind="secondary"]:hover, 
     button[kind="secondary"]:active, 
-    button[kind="secondary"]:focus { 
+    button[kind="secondary"]:focus,
+    button[kind="secondaryFormSubmit"]:hover,
+    button[kind="secondaryFormSubmit"]:active,
+    button[kind="secondaryFormSubmit"]:focus { 
         background-color: #F0F0E8 !important; 
         border-color: #7A7E72 !important;
         color: #2D3227 !important;
