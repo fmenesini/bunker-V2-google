@@ -2894,7 +2894,7 @@ elif menu == "Report Sintetico":
                         "Oneri (AB/AC)": f"{float(resolved.sconto_carico or 0):.1f}% | {float(resolved.sconto_pagamento or 0):.1f}%",
                         "Premi PFA (AL %)": f"{float(res_calc.contratto_tot_pfa):.1f}%",
                         "Prezzo Net Net AM": float(res_calc.net_net_finale),
-                        "Min Net Net": float(p_min_g),
+                        "Soglia Floor G": float(p_min_g),
                         "Delta Margine": float(res_calc.delta_vs_min),
                         "Stato Approvazione": "🟢 Approvato" if res_calc.guardrail_ok else "🔴 Sotto Floor"
                     })
