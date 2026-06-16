@@ -294,15 +294,17 @@ st.markdown("""
         color: #2D3227 !important;
     }
 
-    /* FORZA IL TESTO DELLE OPZIONI DEI RADIO BUTTONS (st.radio) E CHECKBOX (st.checkbox) A RESTARE SCURO */
-    div[data-testid="stRadio"] *, 
-    div[data-baseweb="radio"] *, 
-    label[data-baseweb="radio"] *,
-    div[data-testid="stCheckbox"] *,
-    div[data-baseweb="select"] *,
-    div[class*="select"] * {
+    /* 11. FIX DEFINITIVO PER TESTI RADIO BUTTON E CHECKBOX IN DARK MODE NATIVA */
+    div[role="radiogroup"] label p,
+    div[role="radiogroup"] label span,
+    div[role="radiogroup"] label div,
+    label[data-baseweb="checkbox"] p,
+    label[data-baseweb="checkbox"] span,
+    label[data-baseweb="checkbox"] div,
+    div[data-testid="stRadio"] p,
+    div[data-testid="stRadio"] span {
         color: #2D3227 !important;
-        -webkit-text-fill-color: #2D3227 !important; /* Forza iOS Safari */
+        -webkit-text-fill-color: #2D3227 !important;
     }
 </style>
 """, unsafe_allow_html=True)
