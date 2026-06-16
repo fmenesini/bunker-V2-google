@@ -98,7 +98,8 @@ def render_badge(level):
 st.markdown("""
 <style>
     /* 1. IMPORTAZIONE DEI FONT AZIENDALI */
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Roboto:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Lato:wght@700;900&family=Open+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
 
     /* 2. REGOLE STRUTTURALI E COLORI DI SFONDO */
     .block-container { 
@@ -125,10 +126,10 @@ st.markdown("""
 
     /* 3. TIPOGRAFIA & TABELLE */
     .stApp, .stApp [data-testid="stAppViewContainer"] { 
-        font-family: 'Roboto', sans-serif !important;
+        font-family: 'Open Sans', sans-serif !important;
     } 
     h1, h2, h3, h4, h5, h6 { 
-        font-family: 'Montserrat', sans-serif !important; 
+        font-family: 'Lato', sans-serif !important; 
     }
 
     /* 4. METRICHE E CARTE (Componenti "Card") */
