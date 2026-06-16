@@ -843,8 +843,8 @@ if menu == "Simulatore Offerte":
     # Renderizzazione Micro-Badge ereditarietà coerente con React
     with col_m3:
         st.markdown(f"""
-        <div style="background-color: #FFFFFF; padding: 20px; border-radius: 16px; border: 1px solid #E2E2D8; box-shadow: 0 1px 3px rgba(45,50,39,0.05); display: flex; flex-direction: column; justify-content: center; height: 100%;">
-            <div style="font-size: 0.75rem; color: #7A7E72; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-bottom: 8px;">LIVELLO ERIDITARIETÀ RISOLTO</div>
+        <div style="background-color: #FFFFFF; padding: 12px 20px; border-radius: 12px; border: 1px solid #E2E2D8; box-shadow: 0 1px 3px rgba(45,50,39,0.05); display: flex; flex-direction: column; justify-content: center; height: 100%;">
+            <div style="font-size: 0.7rem; color: #7A7E72; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin-bottom: 4px;">LIVELLO EREDITARIETÀ RISOLTO</div>
             <div>{render_badge(contract.livello_risolto)}</div>
         </div>
         """, unsafe_allow_html=True)
