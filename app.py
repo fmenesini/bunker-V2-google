@@ -149,32 +149,23 @@ st.markdown("""
     /* 4. METRICHE E CARTE (Componenti "Card") */
     div[data-testid="stMetric"] { 
         background-color: #FFFFFF !important; 
-        padding: 20px !important; 
-        border-radius: 16px !important; 
+        padding: 12px 20px !important; /* Ridotto il padding verticale */
+        border-radius: 12px !important; /* Bordo un po' meno arrotondato */
         border: 1px solid #E2E2D8 !important; 
         box-shadow: 0 1px 3px rgba(45,50,39,0.05) !important; 
     }
     div[data-testid="stMetricValue"] { 
         color: #2D3227 !important; 
         font-weight: 700 !important; 
-        font-size: 2.2rem !important; /* Ingrandito per maggiore impatto */
-        letter-spacing: -1px;
+        font-size: 1.6rem !important; /* Ridotto drasticamente da 2.2rem a 1.6rem */
+        letter-spacing: -0.5px;
     }
     div[data-testid="stMetricLabel"] { 
-        font-size: 0.75rem !important; 
+        font-size: 0.7rem !important; /* Etichetta leggermente più fine */
         color: #7A7E72 !important; 
         text-transform: uppercase !important; 
-        letter-spacing: 0.1em !important; 
+        letter-spacing: 0.05em !important; 
         font-weight: 700 !important; 
-    }
-
-    /* Contenitori generici (st.container con border=True) */
-    div[data-testid="stVerticalBlockBorderWrapper"] { 
-        background-color: #FFFFFF !important; 
-        border-radius: 16px !important; 
-        border: 1px solid #E2E2D8 !important; 
-        box-shadow: 0 1px 4px rgba(0,0,0,0.02) !important; 
-        padding: 20px !important; 
     }
 
     /* 5. PULSANTI (Stile primario Verde Oliva) */
