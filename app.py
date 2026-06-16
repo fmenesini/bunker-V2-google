@@ -169,24 +169,28 @@ st.markdown("""
     }
 
     /* 5. PULSANTI (Stile primario Verde Oliva) */
-    .stButton>button[kind="primary"] { 
+    button[kind="primary"] { 
         background-color: #5A6340 !important; 
         color: #FFFFFF !important; 
         font-family: 'Space Grotesk', sans-serif !important;
         font-weight: 700 !important; 
         border-radius: 12px !important; 
-        border: none !important; 
+        border: 1px solid #5A6340 !important; 
         padding: 0.6rem 1.2rem !important; 
         box-shadow: 0 2px 4px rgba(90,99,64,0.15) !important;
         transition: all 0.2s ease-in-out !important;
     }
-    .stButton>button[kind="primary"]:hover { 
+    button[kind="primary"]:hover, 
+    button[kind="primary"]:active, 
+    button[kind="primary"]:focus { 
         background-color: #495033 !important; 
+        border-color: #495033 !important;
+        color: #FFFFFF !important;
         transform: translateY(-1px) !important;
     }
     
     /* Pulsanti secondari */
-    .stButton>button[kind="secondary"] { 
+    button[kind="secondary"] { 
         background-color: #FFFFFF !important; 
         color: #2D3227 !important; 
         border: 1px solid #E2E2D8 !important;
@@ -195,9 +199,12 @@ st.markdown("""
         font-weight: 600 !important;
         transition: all 0.2s ease-in-out !important;
     }
-    .stButton>button[kind="secondary"]:hover { 
+    button[kind="secondary"]:hover, 
+    button[kind="secondary"]:active, 
+    button[kind="secondary"]:focus { 
         background-color: #F0F0E8 !important; 
         border-color: #7A7E72 !important;
+        color: #2D3227 !important;
     }
 
     /* 6. TAB DI NAVIGAZIONE (Stile minimale a pillola) */
