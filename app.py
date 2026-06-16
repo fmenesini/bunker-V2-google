@@ -263,27 +263,37 @@ st.markdown("""
     .badge-referenza { background-color: #DDE2C6 !important; color: #495033 !important; border: 1px solid #C4CCA0; }
     .badge-nessuno { background-color: #E2E2D8 !important; color: #7A7E72 !important; border: 1px solid #D6D6CC; }
 
-    /* 10. MENU LATERALE (SIDEBAR) MODERNO */
-    section[data-testid="stSidebar"] div[role="radiogroup"] > label {
+    /* 10. MENU LATERALE (SIDEBAR) MODERNO - FIX DEFINITIVO */
+    [data-testid="stSidebar"] [role="radiogroup"] {
+        gap: 0.5rem; /* Spazio tra i bottoni */
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] label {
         background-color: transparent;
         padding: 10px 15px;
         border-radius: 8px;
-        margin-bottom: 4px;
-        transition: background-color 0.2s ease;
+        margin: 0;
+        transition: all 0.2s ease;
         cursor: pointer;
+        width: 100%;
     }
-    section[data-testid="stSidebar"] div[role="radiogroup"] > label:hover {
-        background-color: #EAEAE0; /* Colore hover */
+    [data-testid="stSidebar"] [role="radiogroup"] label:hover {
+        background-color: #EAEAE0;
     }
-    /* Nasconde il "pallino" del radio button */
-    section[data-testid="stSidebar"] div[role="radiogroup"] div[data-baseweb="radio"] div {
-        display: none; 
+    /* Nasconde il cerchietto nativo del radio button */
+    [data-testid="stSidebar"] [role="radiogroup"] label div[data-baseweb="radio"] > div:first-child {
+        display: none !important;
     }
-    /* Evidenzia la voce selezionata */
-    section[data-testid="stSidebar"] div[role="radiogroup"] label[data-checked="true"] {
-        background-color: #DDE2C6 !important; /* Verde chiaro per la voce attiva */
-        border-left: 4px solid #5A6340; /* Linea laterale stile enterprise */
-        font-weight: bold;
+    /* Stile della voce attiva */
+    [data-testid="stSidebar"] [role="radiogroup"] label[data-checked="true"] {
+        background-color: #DDE2C6 !important;
+        border-left: 4px solid #5A6340;
+        border-radius: 0 8px 8px 0;
+    }
+    /* Allineamento del testo senza il cerchietto */
+    [data-testid="stSidebar"] [role="radiogroup"] label p {
+        font-weight: 600;
+        color: #2D3227 !important;
+        margin-left: 0 !important;
     }
 
     /* 11. PREVENZIONE DEL CONFLITTO DI CONTRASTO NEI WIDGET NATIVI */
