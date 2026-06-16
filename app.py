@@ -1941,13 +1941,17 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
                     sel_scenario_text = st.selectbox("Seleziona scenario da ricaricare nel simulatore", list(scenari_opzioni.keys()), key="select_scenario_load_key")
                     scenario_id = scenari_opzioni[sel_scenario_text]
                     
-                    if st.button("CARICA PROPOSTA SELEZIONATA 🔄", type="primary", use_container_width=True, help="Sovrascrive lo scenario corrente ripristinando la simulazione caricata."):
-                        cursor.execute("SELECT gruppo_macro, sottogruppo, associato_insegna, global_carico, global_pagamento, dati_json FROM proposte_rinnovi WHERE id=?", (scenario_id,))
-                        res_scen = cursor.fetchone()
+                    # Definiamo il Callback che aggiorna lo stato PRIMA del render della pagina
+                    def restore_scenario_cb(scen_id):
+                        conn_cb = sqlite3.connect(DB_FILE)
+                        cursor_cb = conn_cb.cursor()
+                        cursor_cb.execute("SELECT gruppo_macro, sottogruppo, associato_insegna, global_carico, global_pagamento, dati_json FROM proposte_rinnovi WHERE id=?", (scen_id,))
+                        res_scen = cursor_cb.fetchone()
+                        conn_cb.close()
+                        
                         if res_scen:
                             st.session_state.rinnovi_gruppo = res_scen[0]
                             st.session_state.rinnovi_sottogruppo = res_scen[1] or ""
-                            st.session_state.rinnovi_insegna = res_scen[2] or ""
                             st.session_state.global_carico = float(res_scen[3])
                             st.session_state.global_pagamento = float(res_scen[4])
                             
@@ -1956,7 +1960,15 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
                                 df_restored['ean'] = df_restored['ean'].astype(str).str.replace(r'\.0$', '', regex=True).str.zfill(13)
                                 
                             st.session_state.rinnovi_df = df_restored
-                            st.success(f"Scenario ID {scenario_id} ripristinato con successo.")
+                            st.session_state.success_msg_rinnovi = f"Scenario ID {scen_id} ripristinato con successo."
+
+                    # Usiamo on_click per lanciare la funzione prima del ricaricamento
+                    st.button("CARICA PROPOSTA SELEZIONATA 🔄", type="primary", use_container_width=True, help="Sovrascrive lo scenario corrente ripristinando la simulazione caricata.", on_click=restore_scenario_cb, args=(scenario_id,))
+                    
+                    # Mostra il messaggio di successo salvato nel callback
+                    if "success_msg_rinnovi" in st.session_state and st.session_state.success_msg_rinnovi:
+                        st.success(st.session_state.success_msg_rinnovi)
+                        st.session_state.success_msg_rinnovi = None
                             st.rerun()
                             
             with col_load_right:
