@@ -1969,7 +1969,6 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
                     if "success_msg_rinnovi" in st.session_state and st.session_state.success_msg_rinnovi:
                         st.success(st.session_state.success_msg_rinnovi)
                         st.session_state.success_msg_rinnovi = None
-                            st.rerun()
                             
             with col_load_right:
                 with st.container(border=True):
