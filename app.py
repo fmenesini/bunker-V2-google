@@ -282,7 +282,7 @@ st.markdown("""
     [data-testid="stSidebar"] [data-testid="stRadio"] {
         gap: 0.2rem;
     }
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] {
+    [data-testid="stSidebar"] [data-testid="stRadio"] label {
         background-color: transparent !important;
         padding: 10px 15px !important;
         border-radius: 8px !important;
@@ -291,26 +291,34 @@ st.markdown("""
         cursor: pointer !important;
         width: 100% !important;
         box-sizing: border-box !important;
+        border-left: 4px solid transparent !important; /* Previene il "salto" del layout */
     }
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:hover {
+    [data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
         background-color: #EAEAE0 !important;
     }
     /* Nasconde ESATTAMENTE il cerchietto nativo */
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] > div:first-child {
+    [data-testid="stSidebar"] [data-testid="stRadio"] label > div:first-child {
         display: none !important;
     }
-    /* Stile della voce attiva */
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-checked="true"] {
+    
+    /* STILE DELLA VOCE ATTIVA (Infallibile tramite :has) */
+    [data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
         background-color: #DDE2C6 !important;
         border-left: 4px solid #5A6340 !important;
         border-radius: 0 8px 8px 0 !important;
     }
-    /* Allineamento del testo */
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] div {
-        font-weight: 600 !important;
+    [data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) p {
+        font-weight: 800 !important;
+        color: #5A6340 !important;
+        -webkit-text-fill-color: #5A6340 !important;
+    }
+
+    /* Allineamento del testo normale */
+    [data-testid="stSidebar"] [data-testid="stRadio"] label p {
+        font-weight: 500 !important;
         color: #2D3227 !important;
         margin-left: 0 !important;
-        font-size: 0.85rem !important;
+        font-size: 0.9rem !important;
     }
 
     /* 11. PREVENZIONE DEL CONFLITTO DI CONTRASTO NEI WIDGET NATIVI */
