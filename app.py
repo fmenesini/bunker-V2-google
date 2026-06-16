@@ -2747,7 +2747,45 @@ elif menu == "Report Sintetico":
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     
-    # KPI Cards Superiori (Sempre Visibili)
+    # --- 1. POPOLAMENTO DATI ACCOPPIAMENTO COMMERCIALE (df_dash) ---
+    cursor.execute("SELECT gruppo_macro, associato_insegna FROM struttura_gdo WHERE attivo=1")
+    all_clients = cursor.fetchall()
+    
+    cursor.execute("SELECT ean, tipo_olio, descrizione_commerciale, COALESCE(min_net_net_g, 0) FROM anagrafica_master LEFT JOIN guardrail_aziendali USING(ean)")
+    all_products = cursor.fetchall()
+    
+    dash_data = []
+    for c in all_clients:
+        cursor.execute("SELECT sottogruppo FROM accordi_commerciali WHERE gruppo_macro=? AND sottogruppo != '' LIMIT 1", (c[0],))
+        res_sub = cursor.fetchone()
+        sg = res_sub[0] if res_sub else ""
+        
+        for p in all_products:
+            res = get_merged_contract(conn, c[0], sg, c[1], p[0], p[1])
+                
+            if res.listino_r is not None:
+                p_net = float(res.listino_r)
+                for s in [res.sconto_1, res.sconto_2, res.sconto_3, res.sconto_4, res.sconto_5, res.sconto_6, res.sconto_7, res.sconto_y, res.sconto_carico, res.sconto_pagamento]:
+                    if s is not None:
+                        p_net *= (1 - (float(s)/100))
+                pfa = float((res.voce_i or 0) + (res.voce_ii or 0) + (res.voce_iii or 0) + (res.voce_iv or 0) + (res.voce_v or 0))
+                p_net *= (1 - (pfa/100))
+                
+                dash_data.append({
+                    'Gruppo': c[0],
+                    'Cliente': c[1] if c[1] else c[0],
+                    'Categoria': p[1],
+                    'Prodotto': p[2],
+                    'NetNet': p_net,
+                    'Floor': float(p[3]),
+                    'Delta_Euro': p_net - float(p[3]),
+                    'PFA_Tot': pfa,
+                    'Stato': 'Verde (Sopra Soglia)' if p_net >= float(p[3]) else 'Rosso (Sotto Soglia)'
+                })
+                
+    df_dash = pd.DataFrame(dash_data)
+    
+    # --- 2. KPI CARDS SUPERIORI (Sempre Visibili) ---
     col_k1, col_k2, col_k3, col_k4 = st.columns(4)
     cursor.execute("SELECT COUNT(*) FROM accordi_commerciali")
     col_k1.metric("Totale Regole Attive", f"{cursor.fetchone()[0]}")
@@ -2784,7 +2822,6 @@ elif menu == "Report Sintetico":
             grp_rep_sel = st.selectbox("1. Gruppo GDO Nazionale", gruppi_report, key="rep_grp")
             
         with col_rep2:
-            # Estrazione dei sottogruppi legati al gruppo per limitare l'export al solo sottogruppo
             cursor.execute("""
                 SELECT DISTINCT sottogruppo FROM accordi_commerciali WHERE gruppo_macro=? AND sottogruppo != '' AND sottogruppo IS NOT NULL
                 UNION
@@ -2796,7 +2833,6 @@ elif menu == "Report Sintetico":
             sub_rep_sel = st.selectbox("2. Sottogruppo GDO (Opzionale)", sottogruppi_rep_options, key="rep_sub")
             
         with col_rep3:
-            # Filtro dinamico per Insegna Locale basato su gruppo e sottogruppo selezionato
             sub_val_query = None if sub_rep_sel == "— Nessuno / Solo Gruppo —" else sub_rep_sel
             if sub_val_query:
                 cursor.execute("""
@@ -2867,27 +2903,24 @@ elif menu == "Report Sintetico":
         else:
             df_rep_out = pd.DataFrame(rows_report)
             
-            # Generazione del file Excel con libreria openpyxl strutturata
             wb = openpyxl.Workbook()
             ws = wb.active
             ws.title = "Report_Consolidato"
             
             font_header = Font(name="Space Grotesk", size=11, bold=True, color="FFFFFF")
-            fill_header = PatternFill(start_color="5A6340", end_color="5A6340", fill_type="solid") # Salov Primary Green
-            fill_red = PatternFill(start_color="FAF2F0", end_color="FAF2F0", fill_type="solid") # Salov Light Rose
+            fill_header = PatternFill(start_color="5A6340", end_color="5A6340", fill_type="solid")
+            fill_red = PatternFill(start_color="FAF2F0", end_color="FAF2F0", fill_type="solid")
             thin_border = Border(
                 left=Side(style='thin', color='E2E2D8'), right=Side(style='thin', color='E2E2D8'),
                 top=Side(style='thin', color='E2E2D8'), bottom=Side(style='thin', color='E2E2D8')
             )
             
-            # Scrittura Intestazioni
             for col_num, h_text in enumerate(df_rep_out.columns, 1):
                 cell = ws.cell(row=1, column=col_num, value=h_text)
                 cell.font = font_header
                 cell.fill = fill_header
                 cell.alignment = Alignment(horizontal="center", vertical="center")
                 
-            # Scrittura Righe Dati
             for row_num, row_data in enumerate(df_rep_out.values, 2):
                 is_red = "🔴" in str(row_data[-1])
                 for col_num, val in enumerate(row_data, 1):
@@ -2897,11 +2930,9 @@ elif menu == "Report Sintetico":
                     if is_red:
                         cell.fill = fill_red
                     
-                    # Formattazione Numerica colonne valutarie
                     if col_num in [4, 8, 9, 10]:
                         cell.number_format = '#,##0.000 €' if col_num in [8, 10] else '#,##0.00 €'
             
-            # Larghezza colonne automatica
             for col in ws.columns:
                 max_len = max(len(str(cell.value or '')) for cell in col)
                 col_letter = openpyxl.utils.get_column_letter(col[0].column)
@@ -2910,7 +2941,6 @@ elif menu == "Report Sintetico":
             buffer_rep = io.BytesIO()
             wb.save(buffer_rep)
             
-            # Salvataggio in Session State per mantenere visibilità della tabella
             st.session_state.compiled_rep_df = df_rep_out
             st.session_state.compiled_rep_bytes = buffer_rep.getvalue()
             nome_file_exp = f"Report_Consolidato_{grp_rep_sel.replace(' ', '_')}"
@@ -2920,7 +2950,6 @@ elif menu == "Report Sintetico":
                 nome_file_exp += f"_{ins_val.replace(' ', '_')}"
             st.session_state.compiled_rep_filename = f"{nome_file_exp}_{datetime.now().strftime('%Y%m%d')}.xlsx"
 
-    # Rendering dei risultati (avviene sotto solo dopo la richiesta)
     if "compiled_rep_df" in st.session_state:
         st.markdown("#### 📄 Risultati Report Consolidato Elaborato")
         
@@ -2949,9 +2978,7 @@ elif menu == "Report Sintetico":
     
     st.divider()
 
-    # ----------------------------------------------------
-    # SEZIONE 2: BENCHMARK COMPARATIVO DI CANALE
-    # ----------------------------------------------------
+    # --- 3. SEZIONE 2: BENCHMARK COMPARATIVO DI CANALE ---
     st.markdown("### 🔍 Benchmark Comparativo di Canale (Livello Sottogruppo)")
     st.markdown("Analisi strutturale delle asimmetrie commerciali. Sconti e oneri collassati per destinazione logica.")
     
@@ -3044,90 +3071,90 @@ elif menu == "Report Sintetico":
             else:
                 st.info("Nessun accordo strutturato trovato per i filtri selezionati.")
 
-    st.divider()
+        st.divider()
 
-    # ----------------------------------------------------
-    # SEZIONE 3: SINTESI CANALE E DASHBOARD DIREZIONALE
-    # ----------------------------------------------------
-    st.markdown("### 📊 Salute Contratti, Profondità Margine & Sintesi Canale GDO")
-    
-    col_sin_left, col_sin_right = st.columns([1, 1])
-    
-    with col_sin_left:
-        with st.container(border=True):
-            st.markdown("#### Sintesi Dinamica per Canale GDO")
-            query_sintesi = """
-                SELECT gruppo_macro as [Gruppo Macro],
-                       COUNT(*) as [Totale Righe],
-                       ROUND(AVG(listino_r), 2) as [Listino Medio (€)],
-                       ROUND(AVG(sconto_1), 2) as [Sconto 1 Medio (%)],
-                       ROUND(AVG(voce_contratto_1 + COALESCE(voce_contratto_2,0) + COALESCE(voce_contratto_3,0) + 
-                                 COALESCE(voce_contratto_4,0) + COALESCE(voce_contratto_5,0)), 2) as [PFA Totale (%)]
-                FROM accordi_commerciali
-                GROUP BY gruppo_macro
-                ORDER BY [Totale Righe] DESC
-            """
-            df_sintesi = pd.read_sql_query(query_sintesi, conn)
-            st.dataframe(df_sintesi, use_container_width=True, hide_index=True)
+        # --- 4. SEZIONE 3: SINTESI CANALE E DASHBOARD DIREZIONALE ---
+        st.markdown("### 📊 Salute Contratti, Profondità Margine & Sintesi Canale GDO")
+        
+        if not df_dash.empty:
+            col_sin_left, col_sin_right = st.columns([1, 1])
             
-            # Grafico Pressione PFA per Categoria (Spostato qui per bilanciare il layout)
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("##### Pressione Promozionale (PFA) per Categoria")
-            df_cat_health = df_dash.groupby('Categoria')['PFA_Tot'].mean().reset_index().sort_values('PFA_Tot', ascending=False)
-            fig_cat = px.bar(df_cat_health, x='Categoria', y='PFA_Tot', labels={'Categoria': 'Famiglia Prodotto', 'PFA_Tot': 'PFA Medio (%)'}, color='PFA_Tot', color_continuous_scale='Blues')
-            st.plotly_chart(fig_cat, use_container_width=True)
+            with col_sin_left:
+                with st.container(border=True):
+                    st.markdown("#### Sintesi Dinamica per Canale GDO")
+                    query_sintesi = """
+                        SELECT gruppo_macro as [Gruppo Macro],
+                               COUNT(*) as [Totale Righe],
+                               ROUND(AVG(listino_r), 2) as [Listino Medio (€)],
+                               ROUND(AVG(sconto_1), 2) as [Sconto 1 Medio (%)],
+                               ROUND(AVG(voce_contratto_1 + COALESCE(voce_contratto_2,0) + COALESCE(voce_contratto_3,0) + 
+                                         COALESCE(voce_contratto_4,0) + COALESCE(voce_contratto_5,0)), 2) as [PFA Totale (%)]
+                        FROM accordi_commerciali
+                        GROUP BY gruppo_macro
+                        ORDER BY [Totale Righe] DESC
+                    """
+                    df_sintesi = pd.read_sql_query(query_sintesi, conn)
+                    st.dataframe(df_sintesi, use_container_width=True, hide_index=True)
+                    
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    st.markdown("##### Pressione Promozionale (PFA) per Categoria")
+                    df_cat_health = df_dash.groupby('Categoria')['PFA_Tot'].mean().reset_index().sort_values('PFA_Tot', ascending=False)
+                    fig_cat = px.bar(df_cat_health, x='Categoria', y='PFA_Tot', labels={'Categoria': 'Famiglia Prodotto', 'PFA_Tot': 'PFA Medio (%)'}, color='PFA_Tot', color_continuous_scale='Blues')
+                    st.plotly_chart(fig_cat, use_container_width=True)
 
-    with col_sin_right:
-        with st.container(border=True):
-            st.markdown("#### Salute dei Contratti")
-            
-            # Visualizzatore filtro per grafici della dashboard
-            col_chart_f1, col_chart_f2 = st.columns(2)
-            with col_chart_f1:
-                dash_cat = st.selectbox("1. Filtra Grafici per Categoria", ["Tutte le Categorie"] + sorted(df_dash['Categoria'].unique().tolist()), key="dash_cat")
-            with col_chart_f2:
-                prods_available = df_dash[df_dash['Categoria'] == dash_cat]['Prodotto'].unique().tolist() if dash_cat != "Tutte le Categorie" else df_dash['Prodotto'].unique().tolist()
-                dash_prod = st.selectbox("2. Filtra Grafici per Referenza", ["Tutte le Referenze"] + sorted(prods_available), key="dash_prod")
-            
-            df_pie = df_dash.copy()
-            if dash_cat != "Tutte le Categorie": df_pie = df_pie[df_pie['Categoria'] == dash_cat]
-            if dash_prod != "Tutte le Referenze": df_pie = df_pie[df_pie['Prodotto'] == dash_prod]
-            
-            if not df_pie.empty:
-                def format_clients(clients):
-                    unique_clients = sorted(list(set(clients)))
-                    if len(unique_clients) > 8:
-                        return "<br>".join(unique_clients[:8]) + "<br><i>...e altri</i>"
-                    return "<br>".join(unique_clients)
+            with col_sin_right:
+                with st.container(border=True):
+                    st.markdown("#### Salute dei Contratti")
+                    
+                    col_chart_f1, col_chart_f2 = st.columns(2)
+                    with col_chart_f1:
+                        dash_cat = st.selectbox("1. Filtra Grafici per Categoria", ["Tutte le Categorie"] + sorted(df_dash['Categoria'].unique().tolist()), key="dash_cat")
+                    with col_chart_f2:
+                        prods_available = df_dash[df_dash['Categoria'] == dash_cat]['Prodotto'].unique().tolist() if dash_cat != "Tutte le Categorie" else df_dash['Prodotto'].unique().tolist()
+                        dash_prod = st.selectbox("2. Filtra Grafici per Referenza", ["Tutte le Referenze"] + sorted(prods_available), key="dash_prod")
+                    
+                    df_pie = df_dash.copy()
+                    if dash_cat != "Tutte le Categorie": 
+                        df_pie = df_pie[df_pie['Categoria'] == dash_cat]
+                    if dash_prod != "Tutte le Referenze": 
+                        df_pie = df_pie[df_pie['Prodotto'] == dash_prod]
+                    
+                    if not df_pie.empty:
+                        def format_clients(clients):
+                            unique_clients = sorted(list(set(clients)))
+                            if len(unique_clients) > 8:
+                                return "<br>".join(unique_clients[:8]) + "<br><i>...e altri</i>"
+                            return "<br>".join(unique_clients)
 
-                df_pie_agg = df_pie.groupby('Stato').agg(
-                    Conteggio=('Prodotto', 'count'),
-                    Clienti_Lista=('Cliente', format_clients)
-                ).reset_index()
+                        df_pie_agg = df_pie.groupby('Stato').agg(
+                            Conteggio=('Prodotto', 'count'),
+                            Clienti_Lista=('Cliente', format_clients)
+                        ).reset_index()
 
-                fig_pie = px.pie(df_pie_agg, values='Conteggio', names='Stato',
-                                 custom_data=['Clienti_Lista'],
-                                 title="Distribuzione Referenze (Sopra/Sotto Soglia Vs net net contrattuale)",
-                                 color='Stato', color_discrete_map={'Verde (Sopra Soglia)':'#5A6340', 'Rosso (Sotto Soglia)':'#A34A3F'})
-                
-                fig_pie.update_traces(hovertemplate="<b>%{label}</b><br>Num. Accordi: %{value}<br><br><b>Clienti coinvolti:</b><br>%{customdata[0]}<extra></extra>")
-                st.plotly_chart(fig_pie, use_container_width=True)
-                
-                # Distanza Media dal Floor
-                df_delta = df_pie.groupby('Categoria')['Delta_Euro'].mean().reset_index()
-                df_delta['Colore'] = df_delta['Delta_Euro'].apply(lambda x: 'Positivo' if x >= 0 else 'Negativo')
-                
-                fig_delta = px.bar(df_delta, x='Categoria', y='Delta_Euro', 
-                                   title="Distanza Media dal Floor (€)",
-                                   color='Colore', color_discrete_map={'Positivo':'#5A6340', 'Negativo':'#A34A3F'},
-                                   labels={'Delta_Euro': 'Delta Medio (€)', 'Categoria': ''})
-                
-                fig_delta.update_layout(showlegend=False)
-                fig_delta.update_traces(hovertemplate="<b>%{x}</b><br>Delta Medio: %{y:.3f} €<extra></extra>")
-                st.plotly_chart(fig_delta, use_container_width=True)
-                
-            else:
-                st.info("Nessun dato disponibile per i filtri selezionati.")
+                        fig_pie = px.pie(df_pie_agg, values='Conteggio', names='Stato',
+                                         custom_data=['Clienti_Lista'],
+                                         title="Distribuzione Referenze (Sopra/Sotto Soglia Vs net net contrattuale)",
+                                         color='Stato', color_discrete_map={'Verde (Sopra Soglia)':'#5A6340', 'Rosso (Sotto Soglia)':'#A34A3F'})
+                        
+                        fig_pie.update_traces(hovertemplate="<b>%{label}</b><br>Num. Accordi: %{value}<br><br><b>Clienti coinvolti:</b><br>%{customdata[0]}<extra></extra>")
+                        st.plotly_chart(fig_pie, use_container_width=True)
+                        
+                        df_delta = df_pie.groupby('Categoria')['Delta_Euro'].mean().reset_index()
+                        df_delta['Colore'] = df_delta['Delta_Euro'].apply(lambda x: 'Positivo' if x >= 0 else 'Negativo')
+                        
+                        fig_delta = px.bar(df_delta, x='Categoria', y='Delta_Euro', 
+                                           title="Distanza Media dal Floor (€)",
+                                           color='Colore', color_discrete_map={'Positivo':'#5A6340', 'Negativo':'#A34A3F'},
+                                           labels={'Delta_Euro': 'Delta Medio (€)', 'Categoria': ''})
+                        
+                        fig_delta.update_layout(showlegend=False)
+                        fig_delta.update_traces(hovertemplate="<b>%{x}</b><br>Delta Medio: %{y:.3f} €<extra></extra>")
+                        st.plotly_chart(fig_delta, use_container_width=True)
+                        
+                    else:
+                        st.info("Nessun dato disponibile per i filtri selezionati.")
+        else:
+            st.warning("Nessun contratto attivo trovato nel database per generare la Dashboard.")
 
     conn.close()
 # ==========================================
