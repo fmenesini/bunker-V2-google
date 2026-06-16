@@ -2982,7 +2982,7 @@ elif menu == "Report Sintetico":
 
     # --- 3. SEZIONE 2: BENCHMARK COMPARATIVO DI CANALE ---
     st.markdown("### 🔍 Benchmark Comparativo di Canale (Livello Sottogruppo)")
-    st.markdown("Analisi strutturale delle asimmetrie commerciali. Sconti e oneri collassati per destinazione logica.")
+    st.markdown("Analisi strutturale delle asimmetrie commerciali. Sconti e oneri collassati per destinazione logica. In fase TEST usare Ex.v. Classico lt.1")
     
     with st.container(border=True):
         col_f1, col_f2 = st.columns(2)
