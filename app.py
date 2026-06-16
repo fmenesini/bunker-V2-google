@@ -1791,11 +1791,18 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
                     
                 st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
                 
-                col_btn_calc, col_btn_align = st.columns(2)
+                # --- STRUMENTO DI ALLINEAMENTO INTELLIGENTE ---
+                col_btn_calc, col_sel_s, col_sel_pfa, col_btn_align = st.columns([1.5, 1, 1, 1.5])
                 with col_btn_calc:
-                    submit_exp = st.form_submit_button("🔄 Calcola e Verifica Sconti (Manuale)", type="primary")
+                    st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+                    submit_exp = st.form_submit_button("🔄 Calcola e Verifica (Manuale)", type="primary")
+                with col_sel_s:
+                    target_s_align = st.selectbox("Allinea Sconto su:", ["S1 %", "S2 %", "S3 %", "S4 %", "S5 %"], index=4)
+                with col_sel_pfa:
+                    target_pfa_align = st.selectbox("Allinea PFA su:", ["PFA I %", "PFA II %", "PFA III %", "PFA IV %", "PFA V %"], index=4)
                 with col_btn_align:
-                    align_exp = st.form_submit_button("🪄 Allinea Sconti Automaticamente", type="secondary", help="Calcola la differenza matematica e la inserisce in S5 (Fattura) e PFA V (Fuori Fattura) per centrare il target.")
+                    st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+                    align_exp = st.form_submit_button("🪄 Allinea Automaticamente", type="secondary", help="Calcola la differenza e la applica agli slot selezionati per centrare il target.")
                 
                 df_exp_edited = st.data_editor(
                     df_explode[cols_to_edit_exp],
@@ -1822,22 +1829,28 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
                                  df_temp.at[idx, param_mass_exp] = val_mass_exp
                      st.session_state.rinnovi_df = df_temp
                              
-                 # Allineamento automatico se richiesto
+                 # Allineamento automatico mirato sullo slot selezionato
                  if align_exp:
                      df_temp = st.session_state.rinnovi_df.copy()
+                     s_cols = ['S1 %', 'S2 %', 'S3 %', 'S4 %', 'S5 %']
+                     pfa_cols = ['PFA I %', 'PFA II %', 'PFA III %', 'PFA IV %', 'PFA V %']
+                     
                      for idx, row in df_temp[df_temp['[N+1] Volumi'] > 0].iterrows():
+                         # 1. Allineamento Geometrico (Sconti in Fattura)
                          target_fatt = row['[N+1] Sc. Fattura %']
                          p_parziale = 1.0
-                         for s in ['S1 %', 'S2 %', 'S3 %', 'S4 %']:
-                             p_parziale *= (1 - (row[s] / 100))
+                         for s in s_cols:
+                             if s != target_s_align:  # Escludo lo slot bersaglio dal calcolo
+                                 p_parziale *= (1 - (row[s] / 100))
                          
                          if p_parziale > 0:
-                             s5_req = (1 - ((1 - target_fatt/100) / p_parziale)) * 100
-                             df_temp.at[idx, 'S5 %'] = round(s5_req, 2)
+                             s_req = (1 - ((1 - target_fatt/100) / p_parziale)) * 100
+                             df_temp.at[idx, target_s_align] = round(s_req, 2)
                          
+                         # 2. Allineamento Algebrico (Premi Fuori Fattura)
                          target_pfa = row['[N+1] Contratto %']
-                         pfa_parziale = row['PFA I %'] + row['PFA II %'] + row['PFA III %'] + row['PFA IV %']
-                         df_temp.at[idx, 'PFA V %'] = round(target_pfa - pfa_parziale, 2)
+                         pfa_parziale = sum(row[p] for p in pfa_cols if p != target_pfa_align) # Escludo lo slot bersaglio
+                         df_temp.at[idx, target_pfa_align] = round(target_pfa - pfa_parziale, 2)
                      
                      st.session_state.rinnovi_df = df_temp
                      
