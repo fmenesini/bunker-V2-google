@@ -124,26 +124,11 @@ st.markdown("""
     }
 
     /* 3. TIPOGRAFIA & TABELLE */
-    h1, h2, h3 { 
-        color: #2D3227 !important; 
-        font-family: 'Space Grotesk', sans-serif !important; 
-        font-weight: 700 !important; 
-        letter-spacing: -0.03em !important; 
-    }
-    h4, h5, h6 { 
-        color: #5A6340 !important; 
-        font-family: 'Space Grotesk', sans-serif !important;
-        font-weight: 600 !important; 
-    }
-    
-    /* Numeri e codici in font monospazio */
-    .font-mono, td, .stMetric div[data-testid="stMetricValue"] {
-        font-family: 'JetBrains Mono', monospace !important;
-    }
-    
-    /* Allinea a destra i numeri nelle tabelle native */
-    div[data-testid="stDataFrame"] td[class*="st-"] {
-        font-family: 'JetBrains Mono', monospace !important;
+    .stApp, .stApp [data-testid="stAppViewContainer"] { 
+        font-family: 'Roboto', sans-serif !important;
+    } 
+    h1, h2, h3, h4, h5, h6 { 
+        font-family: 'Montserrat', sans-serif !important; 
     }
 
     /* 4. METRICHE E CARTE (Componenti "Card") */
