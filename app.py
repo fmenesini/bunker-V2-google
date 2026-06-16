@@ -985,13 +985,17 @@ if menu == "Simulatore Offerte":
 
     st.markdown("#### Contributi Promozionali Extra (Sell-Out)")
     with st.container(border=True):
-        col_v1, col_v2, col_v3 = st.columns(3)
+        # Creiamo 4 colonne: le prime 3 conterranno i dati (più compatte), la 4a (col_spacer) resterà vuota per spingere tutto a sinistra
+        col_v1, col_v2, col_v3, col_spacer = st.columns([1, 1.2, 1.2, 2.5])
         with col_v1:
             volumi_stimati = st.number_input("Volumi Stimati (Pezzi)", min_value=0, step=100, key="widget_volumi")
         with col_v2:
             contributo_fisso = st.number_input("Contributo Fisso Totale (€)", min_value=0.0, step=50.0, key="widget_fisso")
         with col_v3:
             contributo_pezzo = st.number_input("Contributo a Pezzo (€/Pz)", min_value=0.0, step=0.05, key="widget_pezzo")
+        with col_spacer:
+            # Colonna vuota intenzionalmente per compattare gli input numerici a sinistra
+            pass
 
         costo_totale_extra = contributo_fisso + (contributo_pezzo * volumi_stimati)
         impatto_unitario_extra = Decimal("0.00")
