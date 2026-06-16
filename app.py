@@ -93,7 +93,7 @@ def render_badge(level):
         return f'<span class="badge badge-nessuno">{lvl}</span>'
 
 # ==========================================
-# CSS AVANZATO (CON REGOLE DI SPAZIATURA)
+# CSS AVANZATO (CON REGOLE DI SPAZIATURA E UX MODERNA)
 # ==========================================
 st.markdown("""
 <style>
@@ -123,7 +123,7 @@ st.markdown("""
         color: #2D3227 !important;
     }
 
-    /* 3. TIPOGRAFIA */
+    /* 3. TIPOGRAFIA & TABELLE */
     h1, h2, h3 { 
         color: #2D3227 !important; 
         font-family: 'Space Grotesk', sans-serif !important; 
@@ -140,6 +140,11 @@ st.markdown("""
     .font-mono, td, .stMetric div[data-testid="stMetricValue"] {
         font-family: 'JetBrains Mono', monospace !important;
     }
+    
+    /* Allinea a destra i numeri nelle tabelle native */
+    div[data-testid="stDataFrame"] td[class*="st-"] {
+        font-family: 'JetBrains Mono', monospace !important;
+    }
 
     /* 4. METRICHE E CARTE (Componenti "Card") */
     div[data-testid="stMetric"] { 
@@ -152,7 +157,8 @@ st.markdown("""
     div[data-testid="stMetricValue"] { 
         color: #2D3227 !important; 
         font-weight: 700 !important; 
-        font-size: 1.8rem !important; 
+        font-size: 2.2rem !important; /* Ingrandito per maggiore impatto */
+        letter-spacing: -1px;
     }
     div[data-testid="stMetricLabel"] { 
         font-size: 0.75rem !important; 
@@ -266,8 +272,30 @@ st.markdown("""
     .badge-referenza { background-color: #DDE2C6 !important; color: #495033 !important; border: 1px solid #C4CCA0; }
     .badge-nessuno { background-color: #E2E2D8 !important; color: #7A7E72 !important; border: 1px solid #D6D6CC; }
 
-    /* 10. PREVENZIONE DEL CONFLITTO DI CONTRASTO NEI WIDGET NATIVI */
-    /* Forza il testo scuro e lo sfondo chiaro nei moduli di immissione e tendine */
+    /* 10. MENU LATERALE (SIDEBAR) MODERNO */
+    section[data-testid="stSidebar"] div[role="radiogroup"] > label {
+        background-color: transparent;
+        padding: 10px 15px;
+        border-radius: 8px;
+        margin-bottom: 4px;
+        transition: background-color 0.2s ease;
+        cursor: pointer;
+    }
+    section[data-testid="stSidebar"] div[role="radiogroup"] > label:hover {
+        background-color: #EAEAE0; /* Colore hover */
+    }
+    /* Nasconde il "pallino" del radio button */
+    section[data-testid="stSidebar"] div[role="radiogroup"] div[data-baseweb="radio"] div {
+        display: none; 
+    }
+    /* Evidenzia la voce selezionata */
+    section[data-testid="stSidebar"] div[role="radiogroup"] label[data-checked="true"] {
+        background-color: #DDE2C6 !important; /* Verde chiaro per la voce attiva */
+        border-left: 4px solid #5A6340; /* Linea laterale stile enterprise */
+        font-weight: bold;
+    }
+
+    /* 11. PREVENZIONE DEL CONFLITTO DI CONTRASTO NEI WIDGET NATIVI */
     div[data-baseweb="select"] > div, 
     div[data-baseweb="input"] > div,
     input, 
@@ -278,33 +306,29 @@ st.markdown("""
         -webkit-text-fill-color: #2D3227 !important; /* Forza iOS Safari */
     }
     
-    /* Forza il colore scuro per i placeholder e le etichette dei campi */
     label[data-testid="stWidgetLabel"] p, label[data-testid="stWidgetLabel"] span {
         color: #2D3227 !important;
     }
     
-    /* Popover dei menu a tendina (Selezionatori) */
     div[data-baseweb="popover"] *, div[role="listbox"] * {
         background-color: #FFFFFF !important;
         color: #2D3227 !important;
     }
     
-    /* Allineamento dei testi interni dei componenti st.expander */
     div[data-testid="stExpander"] * {
         color: #2D3227 !important;
     }
 
-    /* 11. FIX DEFINITIVO PER TESTI RADIO BUTTON E CHECKBOX IN DARK MODE NATIVA */
-    div[role="radiogroup"] label p,
-    div[role="radiogroup"] label span,
+    div[role="radiogroup"] label p, 
+    div[role="radiogroup"] label span, 
     div[role="radiogroup"] label div,
-    label[data-baseweb="checkbox"] p,
-    label[data-baseweb="checkbox"] span,
+    label[data-baseweb="checkbox"] p, 
+    label[data-baseweb="checkbox"] span, 
     label[data-baseweb="checkbox"] div,
-    div[data-testid="stRadio"] p,
+    div[data-testid="stRadio"] p, 
     div[data-testid="stRadio"] span {
         color: #2D3227 !important;
-        -webkit-text-fill-color: #2D3227 !important;
+        -webkit-text-fill-color: #2D3227 !important; /* Forza iOS Safari */
     }
 </style>
 """, unsafe_allow_html=True)
