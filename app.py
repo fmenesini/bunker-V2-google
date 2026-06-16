@@ -2855,100 +2855,102 @@ elif menu == "Report Sintetico":
 
     # Elaborazione Report su Richiesta
     if btn_generate_report:
-        sub_val = None if sub_rep_sel == "— Nessuno / Solo Gruppo —" else sub_rep_sel
-        ins_val = None if ass_rep_sel == "— Solo Contratto Strutturale (Nessuna Insegna) —" else ass_rep_sel
-        
-        cursor.execute("""
-            SELECT a.ean, a.descrizione_commerciale, a.tipo_olio, COALESCE(g.min_net_net_g, 0.0), a.codice_sap, a.formato_lt, a.confezione 
-            FROM anagrafica_master a
-            LEFT JOIN guardrail_aziendali g ON a.ean = g.ean
-        """)
-        all_prods = cursor.fetchall()
-        
-        rows_report = []
-        for p in all_prods:
-            p_ean, p_desc, p_tipo, p_min_g, p_sap, p_form, p_conf = p
-            resolved = get_merged_contract(conn, grp_rep_sel, sub_val, ins_val, p_ean, p_tipo)
+            sub_val = None if sub_rep_sel == "— Nessuno / Solo Gruppo —" else sub_rep_sel
+            ins_val = None if ass_rep_sel == "— Solo Contratto Strutturale (Nessuna Insegna) —" else ass_rep_sel
             
-            if resolved.listino_r is None:
-                resolved.listino_r = get_listino_strutturale(conn, grp_rep_sel, sub_val, p_ean)
+            cursor.execute("""
+                SELECT a.ean, a.descrizione_commerciale, a.tipo_olio, COALESCE(g.min_net_net_g, 0.0), a.codice_sap, a.formato_lt, a.confezione 
+                FROM anagrafica_master a
+                LEFT JOIN guardrail_aziendali g ON a.ean = g.ean
+            """)
+            all_prods = cursor.fetchall()
             
-            if resolved.listino_r is not None:
-                input_calc = PricingInput(
-                    listino_r=safe_dec(resolved.listino_r), sconto_1=safe_dec(resolved.sconto_1), sconto_2=safe_dec(resolved.sconto_2), sconto_3=safe_dec(resolved.sconto_3),
-                    sconto_4=safe_dec(resolved.sconto_4), sconto_5=safe_dec(resolved.sconto_5), sconto_6=safe_dec(resolved.sconto_6), sconto_7=safe_dec(resolved.sconto_7),
-                    sconto_y=safe_dec(resolved.sconto_y), sconto_z=Decimal("0.00"), sconto_aa=Decimal("0.00"),
-                    sconto_carico=safe_dec(resolved.sconto_carico), sconto_pagamento=safe_dec(resolved.sconto_pagamento),
-                    voce_i=safe_dec(resolved.voce_i), voce_ii=safe_dec(resolved.voce_ii), voce_iii=safe_dec(resolved.voce_iii), voce_iv=safe_dec(resolved.voce_iv), voce_v=safe_dec(resolved.voce_v),
-                    min_net_net_g=safe_dec(p_min_g)
-                )
-                res_calc = PricingEngine.calculate(input_calc)
+            rows_report = []
+            for p in all_prods:
+                p_ean, p_desc, p_tipo, p_min_g, p_sap, p_form, p_conf = p
+                resolved = get_merged_contract(conn, grp_rep_sel, sub_val, ins_val, p_ean, p_tipo)
                 
-                rows_report.append({
-                    "EAN": p_ean,
-                    "Codice SAP": p_sap,
-                    "Descrizione Prodotto": p_desc,
-                    "Listino Base R": float(resolved.listino_r),
-                    "Sconti Centrali (S1-S5)": f"{float(resolved.sconto_1 or 0):.1f}% / {float(resolved.sconto_2 or 0):.1f}% / {float(resolved.sconto_3 or 0):.1f}% / {float(resolved.sconto_4 or 0):.1f}% / {float(resolved.sconto_5 or 0):.1f}%",
-                    "Oneri (AB/AC)": f"AB: {float(resolved.sconto_carico or 0):.1f}% / AC: {float(resolved.sconto_pagamento or 0):.1f}%",
-                    "Premi PFA (AL %)": f"{float(res_calc.contratto_tot_pfa):.1f}%",
-                    "Prezzo Net Net AM": float(res_calc.net_net_finale),
-                    "Soglia Floor G": float(p_min_g),
-                    "Delta Margine": float(res_calc.delta_vs_min),
-                    "Stato Approvazione": "🟢 Approvato" if res_calc.guardrail_ok else "🔴 Sotto Floor"
-                })
-        
-        if not rows_report:
-            st.warning("Nessun prodotto o accordo commerciale attivo per i criteri selezionati.")
-        else:
-            df_rep_out = pd.DataFrame(rows_report)
-            
-            wb = openpyxl.Workbook()
-            ws = wb.active
-            ws.title = "Report_Consolidato"
-            
-            font_header = Font(name="Space Grotesk", size=11, bold=True, color="FFFFFF")
-            fill_header = PatternFill(start_color="5A6340", end_color="5A6340", fill_type="solid")
-            fill_red = PatternFill(start_color="FAF2F0", end_color="FAF2F0", fill_type="solid")
-            thin_border = Border(
-                left=Side(style='thin', color='E2E2D8'), right=Side(style='thin', color='E2E2D8'),
-                top=Side(style='thin', color='E2E2D8'), bottom=Side(style='thin', color='E2E2D8')
-            )
-            
-            for col_num, h_text in enumerate(df_rep_out.columns, 1):
-                cell = ws.cell(row=1, column=col_num, value=h_text)
-                cell.font = font_header
-                cell.fill = fill_header
-                cell.alignment = Alignment(horizontal="center", vertical="center")
+                if resolved.listino_r is None:
+                    resolved.listino_r = get_listino_strutturale(conn, grp_rep_sel, sub_val, p_ean)
                 
-            for row_num, row_data in enumerate(df_rep_out.values, 2):
-                is_red = "🔴" in str(row_data[-1])
-                for col_num, val in enumerate(row_data, 1):
-                    cell = ws.cell(row=row_num, column=col_num, value=val)
-                    cell.border = thin_border
-                    cell.font = Font(name="Inter", size=10)
-                    if is_red:
-                        cell.fill = fill_red
+                if resolved.listino_r is not None:
+                    input_calc = PricingInput(
+                        listino_r=safe_dec(resolved.listino_r), sconto_1=safe_dec(resolved.sconto_1), sconto_2=safe_dec(resolved.sconto_2), sconto_3=safe_dec(resolved.sconto_3),
+                        sconto_4=safe_dec(resolved.sconto_4), sconto_5=safe_dec(resolved.sconto_5), sconto_6=safe_dec(resolved.sconto_6), sconto_7=safe_dec(resolved.sconto_7),
+                        sconto_y=safe_dec(resolved.sconto_y), sconto_z=Decimal("0.00"), sconto_aa=Decimal("0.00"),
+                        sconto_carico=safe_dec(resolved.sconto_carico), sconto_pagamento=safe_dec(resolved.sconto_pagamento),
+                        voce_i=safe_dec(resolved.voce_i), voce_ii=safe_dec(resolved.voce_ii), voce_iii=safe_dec(resolved.voce_iii), voce_iv=safe_dec(resolved.voce_iv), voce_v=safe_dec(resolved.voce_v),
+                        min_net_net_g=safe_dec(p_min_g)
+                    )
+                    res_calc = PricingEngine.calculate(input_calc)
                     
-                    if col_num in [4, 8, 9, 10]:
-                        cell.number_format = '#,##0.000 €' if col_num in [8, 10] else '#,##0.00 €'
+                    rows_report.append({
+                        "EAN": p_ean,
+                        "Codice SAP": p_sap,
+                        "Descrizione Prodotto": p_desc,
+                        "Listino Base R": float(resolved.listino_r),
+                        "Sconti Centrali (S1-S5)": f"{float(resolved.sconto_1 or 0):.1f}% / {float(resolved.sconto_2 or 0):.1f}% / {float(resolved.sconto_3 or 0):.1f}% / {float(resolved.sconto_4 or 0):.1f}% / {float(resolved.sconto_5 or 0):.1f}%",
+                        "Sconti Locali (S6/S7/Y)": f"S6: {float(resolved.sconto_6 or 0):.1f}% | S7: {float(resolved.sconto_7 or 0):.1f}% | Y: {float(resolved.sconto_y or 0):.1f}%",
+                        "Oneri (AB/AC)": f"AB: {float(resolved.sconto_carico or 0):.1f}% / AC: {float(resolved.sconto_pagamento or 0):.1f}%",
+                        "Premi PFA (AL %)": f"{float(res_calc.contratto_tot_pfa):.1f}%",
+                        "Prezzo Net Net AM": float(res_calc.net_net_finale),
+                        "Soglia Floor G": float(p_min_g),
+                        "Delta Margine": float(res_calc.delta_vs_min),
+                        "Stato Approvazione": "🟢 Approvato" if res_calc.guardrail_ok else "🔴 Sotto Floor"
+                    })
             
-            for col in ws.columns:
-                max_len = max(len(str(cell.value or '')) for cell in col)
-                col_letter = openpyxl.utils.get_column_letter(col[0].column)
-                ws.column_dimensions[col_letter].width = max(max_len + 3, 12)
+            if not rows_report:
+                st.warning("Nessun prodotto o accordo commerciale attivo per i criteri selezionati.")
+            else:
+                df_rep_out = pd.DataFrame(rows_report)
                 
-            buffer_rep = io.BytesIO()
-            wb.save(buffer_rep)
-            
-            st.session_state.compiled_rep_df = df_rep_out
-            st.session_state.compiled_rep_bytes = buffer_rep.getvalue()
-            nome_file_exp = f"Report_Consolidato_{grp_rep_sel.replace(' ', '_')}"
-            if sub_val:
-                nome_file_exp += f"_{sub_val.replace(' ', '_')}"
-            if ins_val:
-                nome_file_exp += f"_{ins_val.replace(' ', '_')}"
-            st.session_state.compiled_rep_filename = f"{nome_file_exp}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+                wb = openpyxl.Workbook()
+                ws = wb.active
+                ws.title = "Report_Consolidato"
+                
+                font_header = Font(name="Space Grotesk", size=11, bold=True, color="FFFFFF")
+                fill_header = PatternFill(start_color="5A6340", end_color="5A6340", fill_type="solid")
+                fill_red = PatternFill(start_color="FAF2F0", end_color="FAF2F0", fill_type="solid")
+                thin_border = Border(
+                    left=Side(style='thin', color='E2E2D8'), right=Side(style='thin', color='E2E2D8'),
+                    top=Side(style='thin', color='E2E2D8'), bottom=Side(style='thin', color='E2E2D8')
+                )
+                
+                for col_num, h_text in enumerate(df_rep_out.columns, 1):
+                    cell = ws.cell(row=1, column=col_num, value=h_text)
+                    cell.font = font_header
+                    cell.fill = fill_header
+                    cell.alignment = Alignment(horizontal="center", vertical="center")
+                    
+                for row_num, row_data in enumerate(df_rep_out.values, 2):
+                    is_red = "🔴" in str(row_data[-1])
+                    for col_num, val in enumerate(row_data, 1):
+                        cell = ws.cell(row=row_num, column=col_num, value=val)
+                        cell.border = thin_border
+                        cell.font = Font(name="Inter", size=10)
+                        if is_red:
+                            cell.fill = fill_red
+                        
+                        # Riallineamento indici valute dopo inserimento nuova colonna (4, 9, 10, 11)
+                        if col_num in [4, 9, 10, 11]:
+                            cell.number_format = '#,##0.000 €' if col_num in [9, 11] else '#,##0.00 €'
+                
+                for col in ws.columns:
+                    max_len = max(len(str(cell.value or '')) for cell in col)
+                    col_letter = openpyxl.utils.get_column_letter(col[0].column)
+                    ws.column_dimensions[col_letter].width = max(max_len + 3, 12)
+                    
+                buffer_rep = io.BytesIO()
+                wb.save(buffer_rep)
+                
+                st.session_state.compiled_rep_df = df_rep_out
+                st.session_state.compiled_rep_bytes = buffer_rep.getvalue()
+                nome_file_exp = f"Report_Consolidato_{grp_rep_sel.replace(' ', '_')}"
+                if sub_val:
+                    nome_file_exp += f"_{sub_val.replace(' ', '_')}"
+                if ins_val:
+                    nome_file_exp += f"_{ins_val.replace(' ', '_')}"
+                st.session_state.compiled_rep_filename = f"{nome_file_exp}_{datetime.now().strftime('%Y%m%d')}.xlsx"
 
     if "compiled_rep_df" in st.session_state:
         st.markdown("#### 📄 Risultati Report Consolidato Elaborato")
