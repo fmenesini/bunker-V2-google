@@ -98,7 +98,7 @@ def render_badge(level):
 st.markdown("""
 <style>
     /* 1. IMPORTAZIONE DEI FONT AZIENDALI */
-    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Roboto:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
     /* 2. REGOLE STRUTTURALI E COLORI DI SFONDO */
     .block-container { 
