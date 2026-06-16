@@ -836,7 +836,7 @@ if menu == "Simulatore Offerte":
         engine_input = replace(engine_input, sconto_z=sconto_z)
 
     with col_l2:
-        st.markdown("#### Limiti Promozionali per il net net minimo - i valori riportati servono come riferimento e sono gli sconti massimi per mantenere il net net minimo")
+        st.markdown("#### Limiti Promozionali per il net net minimo - valori di riferimento per net net minimo - nel caso A è lo sconto applicato")
         with st.container(border=True):
             if "A. Partenza" in metodo_lavoro:
                 engine_max_z = replace(engine_input, sconto_z=Decimal("0.00"))
