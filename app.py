@@ -264,36 +264,38 @@ st.markdown("""
     .badge-nessuno { background-color: #E2E2D8 !important; color: #7A7E72 !important; border: 1px solid #D6D6CC; }
 
     /* 10. MENU LATERALE (SIDEBAR) MODERNO - FIX DEFINITIVO */
-    [data-testid="stSidebar"] [role="radiogroup"] {
-        gap: 0.5rem; /* Spazio tra i bottoni */
+    [data-testid="stSidebar"] [data-testid="stRadio"] {
+        gap: 0.2rem;
     }
-    [data-testid="stSidebar"] [role="radiogroup"] label {
-        background-color: transparent;
-        padding: 10px 15px;
-        border-radius: 8px;
-        margin: 0;
-        transition: all 0.2s ease;
-        cursor: pointer;
-        width: 100%;
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] {
+        background-color: transparent !important;
+        padding: 10px 15px !important;
+        border-radius: 8px !important;
+        margin-bottom: 2px !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
-    [data-testid="stSidebar"] [role="radiogroup"] label:hover {
-        background-color: #EAEAE0;
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:hover {
+        background-color: #EAEAE0 !important;
     }
-    /* Nasconde il cerchietto nativo del radio button */
-    [data-testid="stSidebar"] [role="radiogroup"] label div[data-baseweb="radio"] > div:first-child {
+    /* Nasconde ESATTAMENTE il cerchietto nativo */
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] > div:first-child {
         display: none !important;
     }
     /* Stile della voce attiva */
-    [data-testid="stSidebar"] [role="radiogroup"] label[data-checked="true"] {
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-checked="true"] {
         background-color: #DDE2C6 !important;
-        border-left: 4px solid #5A6340;
-        border-radius: 0 8px 8px 0;
+        border-left: 4px solid #5A6340 !important;
+        border-radius: 0 8px 8px 0 !important;
     }
-    /* Allineamento del testo senza il cerchietto */
-    [data-testid="stSidebar"] [role="radiogroup"] label p {
-        font-weight: 600;
+    /* Allineamento del testo */
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] div {
+        font-weight: 600 !important;
         color: #2D3227 !important;
         margin-left: 0 !important;
+        font-size: 0.85rem !important;
     }
 
     /* 11. PREVENZIONE DEL CONFLITTO DI CONTRASTO NEI WIDGET NATIVI */
