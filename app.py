@@ -763,7 +763,8 @@ if menu == "Simulatore Offerte":
 
     with st.container(border=True):
         st.markdown("#### Contesto Negoziale - Inserire Insegna")
-        col_ctx1, col_ctx2, col_ctx3, col_ctx4 = st.columns(4)
+        # Usiamo pesi: 1 per i selettori brevi, 2.5 per la Referenza che ha un testo molto lungo
+        col_ctx1, col_ctx2, col_ctx3, col_ctx4 = st.columns([1, 1, 1, 2.5])
         
         with col_ctx1:
             associato_sel = st.selectbox(
