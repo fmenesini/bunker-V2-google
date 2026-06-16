@@ -860,7 +860,8 @@ if menu == "Simulatore Offerte":
 
     st.divider()
 
-    col_met1, col_met2 = st.columns([1, 1])
+    # Aggiungiamo una terza colonna vuota "_" che funge da spaziatore a destra
+    col_met1, col_met2, _ = st.columns([1.5, 1.5, 1])
     with col_met1:
         st.markdown("#### Metodologia di Calcolo")
         metodo_lavoro = st.radio(
