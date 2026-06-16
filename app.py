@@ -500,35 +500,53 @@ def seed_baseline_data(conn):
         cursor.execute("UPDATE struttura_gdo SET attivo=1 WHERE associato_insegna=?", (ins,))
         
     fallback_data = [
+        # COOP ITALIA
+        # Gruppo definisce S1=20% e S2=30%
         ('COOP ITALIA', '', '', 'GRUPPO', '', None, 20.0, 30.0, None, None, None, None, None, None, 1.5, 1.0, 14.0, 8.0, None, None, None, None),
-        ('COOP ITALIA', 'COOP ITALIA SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 66.00, None, None, None, None, None, None, 12.0, 5.0, None, None, None, None, None, None, None, None),
-        ('COOP ITALIA', 'COOP ITALIA SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 60.80, None, None, None, None, None, None, 15.0, 0.0, None, None, None, None, None, None, None, None),
-        ('COOP ITALIA', 'COOP ITALIA SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 43.20, None, None, None, None, None, None, 12.0, 0.0, None, None, None, None, None, None, None, None),
+        # Referenze integrano con S3 e S4 accumulandosi a S1 e S2 del Gruppo
+        ('COOP ITALIA', 'COOP ITALIA SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 66.00, None, None, 12.0, 5.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('COOP ITALIA', 'COOP ITALIA SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 60.80, None, None, 15.0, 0.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('COOP ITALIA', 'COOP ITALIA SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 43.20, None, None, 12.0, 0.0, None, None, None, None, None, None, None, None, None, None, None, None),
 
+        # ESSELUNGA GRUPPO
+        # Gruppo definisce S1=35% e S2=15%
         ('ESSELUNGA GRUPPO', '', '', 'GRUPPO', '', None, 35.0, 15.0, None, None, None, None, None, None, 1.2, 1.0, 12.0, 5.0, None, None, None, None),
-        ('ESSELUNGA GRUPPO', 'ESSELUNGA SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 40.00, None, None, None, None, None, None, 10.0, 7.0, None, None, None, None, None, None, None, None),
-        ('ESSELUNGA GRUPPO', 'ESSELUNGA SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 38.00, None, None, None, None, None, None, 55.0, 0.0, None, None, None, None, None, None, None, None),
-        ('ESSELUNGA GRUPPO', 'ESSELUNGA SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 24.00, None, None, None, None, None, None, 13.0, 0.0, None, None, None, None, None, None, None, None),
+        # Referenze integrano con S3 e S4 accumulandosi a S1 e S2 del Gruppo
+        ('ESSELUNGA GRUPPO', 'ESSELUNGA SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 40.00, None, None, 10.0, 7.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('ESSELUNGA GRUPPO', 'ESSELUNGA SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 38.00, None, None, 55.0, 0.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('ESSELUNGA GRUPPO', 'ESSELUNGA SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 24.00, None, None, 13.0, 0.0, None, None, None, None, None, None, None, None, None, None, None, None),
 
+        # CONAD
+        # Gruppo definisce S1=17% e S2=18%
         ('CONAD', '', '', 'GRUPPO', '', None, 17.0, 18.0, None, None, None, None, None, None, 1.5, 1.0, 9.0, 11.0, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 50.00, None, None, None, None, None, None, 12.0, 9.0, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 44.00, None, None, None, None, None, None, 11.0, 4.0, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 30.00, None, None, None, None, None, None, 10.0, 4.0, None, None, None, None, None, None, None, None),
+        # Referenze integrano con S3 e S4 accumulandosi a S1 e S2 del Gruppo
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 50.00, None, None, 12.0, 9.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 44.00, None, None, 11.0, 4.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 30.00, None, None, 10.0, 4.0, None, None, None, None, None, None, None, None, None, None, None, None),
 
+        # SELEX GRUPPO
+        # Gruppo definisce S1=17% e S2=18%
         ('SELEX GRUPPO', '', '', 'GRUPPO', '', None, 17.0, 18.0, None, None, None, None, None, None, 1.5, 1.0, 9.0, 11.0, None, None, None, None),
-        ('SELEX GRUPPO', 'SELEX SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 50.00, None, None, None, None, None, None, 12.0, 9.0, None, None, None, None, None, None, None, None),
-        ('SELEX GRUPPO', 'SELEX SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 44.00, None, None, None, None, None, None, 11.0, 4.0, None, None, None, None, None, None, None, None),
-        ('SELEX GRUPPO', 'SELEX SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 30.00, None, None, None, None, None, None, 10.0, 4.0, None, None, None, None, None, None, None, None),
+        # Referenze integrano con S3 e S4 accumulandosi a S1 e S2 del Gruppo
+        ('SELEX GRUPPO', 'SELEX SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 50.00, None, None, 12.0, 9.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('SELEX GRUPPO', 'SELEX SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 44.00, None, None, 11.0, 4.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('SELEX GRUPPO', 'SELEX SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 30.00, None, None, 10.0, 4.0, None, None, None, None, None, None, None, None, None, None, None, None),
         
+        # PAM GRUPPO
+        # Gruppo definisce S1=15% e S2=20%
         ('PAM GRUPPO', '', '', 'GRUPPO', '', None, 15.0, 20.0, None, None, None, None, None, None, 1.4, 1.0, 11.0, 6.0, None, None, None, None),
-        ('PAM GRUPPO', 'PAM SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 52.00, None, None, None, None, None, None, 14.0, 6.0, None, None, None, None, None, None, None, None),
-        ('PAM GRUPPO', 'PAM SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 48.00, None, None, None, None, None, None, 13.0, 3.0, None, None, None, None, None, None, None, None),
-        ('PAM GRUPPO', 'PAM SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 32.00, None, None, None, None, None, None, 9.0, 3.0, None, None, None, None, None, None, None, None),
+        # Referenze integrano con S3 e S4 accumulandosi a S1 e S2 del Gruppo
+        ('PAM GRUPPO', 'PAM SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 52.00, None, None, 14.0, 6.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('PAM GRUPPO', 'PAM SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 48.00, None, None, 13.0, 3.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('PAM GRUPPO', 'PAM SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 32.00, None, None, 9.0, 3.0, None, None, None, None, None, None, None, None, None, None, None, None),
 
+        # CRAI GRUPPO
+        # Gruppo definisce S1=12% e S2=25%
         ('CRAI GRUPPO', '', '', 'GRUPPO', '', None, 12.0, 25.0, None, None, None, None, None, None, 2.0, 1.0, 7.0, 12.0, None, None, None, None),
-        ('CRAI GRUPPO', 'CRAI SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 56.00, None, None, None, None, None, None, 15.0, 8.0, None, None, None, None, None, None, None, None),
-        ('CRAI GRUPPO', 'CRAI SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 50.00, None, None, None, None, None, None, 12.0, 5.0, None, None, None, None, None, None, None, None),
-        ('CRAI GRUPPO', 'CRAI SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 35.00, None, None, None, None, None, None, 11.0, 5.0, None, None, None, None, None, None, None, None)
+        # Referenze integrano con S3 e S4 accumulandosi a S1 e S2 del Gruppo
+        ('CRAI GRUPPO', 'CRAI SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 56.00, None, None, 15.0, 8.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CRAI GRUPPO', 'CRAI SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 50.00, None, None, 12.0, 5.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CRAI GRUPPO', 'CRAI SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 35.00, None, None, 11.0, 5.0, None, None, None, None, None, None, None, None, None, None, None, None)
     ]
     
     cursor.executemany("""
