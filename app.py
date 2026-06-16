@@ -1509,14 +1509,19 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
         st.markdown("#### Griglia di Simulazione Contrattuale")
         filtro_vista = st.radio("Filtra Referenze in Tabella:", ["Tutte le Referenze", "Solo con Volumi > 0", "Sotto Soglia (Allarme Rosso)"], horizontal=True, key="filtro_vista_rinnovi")
         
-        with st.container(border=True):
-            st.markdown("**Condizioni Logistiche e Finanziarie (Applicate a tutte le referenze)**")
-            col_glob1, col_glob2 = st.columns(2)
-            with col_glob1:
-                st.number_input("Sconto Carico Logistica (%)", min_value=0.0, max_value=100.0, step=0.5, key="global_carico")
-            with col_glob2:
-                st.number_input("Sconto Pagamento (%)", min_value=0.0, max_value=100.0, step=0.5, key="global_pagamento")
+        # --- PLANCIA DI CONTROLLO COMPATTA ---
+        col_top1, col_top2, col_top3 = st.columns([1.2, 1, 1.8])
         
+        with col_top1:
+            with st.container(border=True):
+                st.markdown("<h6 style='color: #5A6340; margin-bottom: 10px;'>📦 Condizioni Logistiche e Finanziarie</h6>", unsafe_allow_html=True)
+                col_glob1, col_glob2 = st.columns(2)
+                with col_glob1:
+                    st.number_input("Sc. Logistica (%)", min_value=0.0, max_value=100.0, step=0.5, key="global_carico")
+                with col_glob2:
+                    st.number_input("Sc. Pagamento (%)", min_value=0.0, max_value=100.0, step=0.5, key="global_pagamento")
+        
+        # Calcolo preventivo dei KPI per mostrarli subito
         df_kpi = st.session_state.rinnovi_df[st.session_state.rinnovi_df['[N+1] Volumi'] > 0].copy()
         tot_delta_perc = 0.0
         if not df_kpi.empty:
@@ -1528,30 +1533,32 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
             if fatt_n > 0:
                 tot_delta_perc = ((fatt_n1 - fatt_n) / fatt_n) * 100
 
-        col_up3, col_up4 = st.columns(2)
-        with col_up3:
+        with col_top2:
             with st.container(border=True):
-                st.markdown("**Esporta Template Simulazione**")
-                buf_sim = io.BytesIO()
-                st.session_state.rinnovi_df[['ean', 'Categoria', 'Sub-Categoria', 'Prodotto', 'Minimo Net Net €'] + OPERATIVE_COLS].to_excel(buf_sim, index=False)
-                st.download_button("Scarica Tabella Simulazione", buf_sim.getvalue(), "Template_Simulazione.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-            
-            st.metric("Variazione Totale Ponderata (%)", fmt_it(tot_delta_perc, 2, is_pct=True, sign=True))
-
-        with col_up4:
+                st.markdown("<h6 style='color: #5A6340; margin-bottom: 10px;'>📊 Variazione Ponderata</h6>", unsafe_allow_html=True)
+                st.metric("Delta Totale Anno su Anno", fmt_it(tot_delta_perc, 2, is_pct=True, sign=True))
+                
+        with col_top3:
             with st.container(border=True):
-                st.markdown("**Importa Dati Simulazione**")
-                up_sim = st.file_uploader("Carica Excel Simulazione", type=['xlsx'], key="up_sim")
-                if up_sim:
-                    df_up_sim = pd.read_excel(up_sim, dtype={'ean': str})
-                    df_up_sim['ean'] = df_up_sim['ean'].astype(str).str.zfill(13)
-                    df_temp = st.session_state.rinnovi_df.copy()
-                    for col in OPERATIVE_COLS + ['Minimo Net Net €']:
-                        if col in df_up_sim.columns:
-                            mapping = df_up_sim.set_index('ean')[col].to_dict()
-                            df_temp[col] = df_temp['ean'].map(mapping).fillna(df_temp[col])
-                    st.session_state.rinnovi_df = df_temp
-                    st.rerun()
+                st.markdown("<h6 style='color: #5A6340; margin-bottom: 10px;'>💾 Import / Export Dati Simulazione</h6>", unsafe_allow_html=True)
+                col_ex1, col_ex2 = st.columns([1, 1.5])
+                with col_ex1:
+                    buf_sim = io.BytesIO()
+                    st.session_state.rinnovi_df[['ean', 'Categoria', 'Sub-Categoria', 'Prodotto', 'Minimo Net Net €'] + OPERATIVE_COLS].to_excel(buf_sim, index=False)
+                    st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+                    st.download_button("📥 Scarica Template", buf_sim.getvalue(), "Template_Simulazione.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+                with col_ex2:
+                    up_sim = st.file_uploader("Carica Excel", type=['xlsx'], key="up_sim", label_visibility="collapsed")
+                    if up_sim:
+                        df_up_sim = pd.read_excel(up_sim, dtype={'ean': str})
+                        df_up_sim['ean'] = df_up_sim['ean'].astype(str).str.zfill(13)
+                        df_temp = st.session_state.rinnovi_df.copy()
+                        for col in OPERATIVE_COLS + ['Minimo Net Net €']:
+                            if col in df_up_sim.columns:
+                                mapping = df_up_sim.set_index('ean')[col].to_dict()
+                                df_temp[col] = df_temp['ean'].map(mapping).fillna(df_temp[col])
+                        st.session_state.rinnovi_df = df_temp
+                        st.rerun()
 
         df_display = st.session_state.rinnovi_df.copy()
         moltiplicatore_globale = (1 - st.session_state.global_carico/100) * (1 - st.session_state.global_pagamento/100)
