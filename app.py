@@ -1598,9 +1598,10 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
         cols_to_edit = ['Prodotto', '[N] Listino €', '[N+1] Volumi', '[N+1] Listino €', '[N+1] Sc. Fattura %', '[N+1] Contratto %', 'Net Net [N] €', 'Net Net [N+1] €', 'Minimo Net Net €', 'Sc. Promo MAX [N+1] %', 'Delta Assoluto €']
         
         with st.form("form_simulazione"):
-            st.markdown("##### ⚡ Azioni Rapide e Aggiornamento Massivo")
+            st.markdown("<h5 style='color: #5A6340; margin-bottom: 10px;'>⚡ Azioni Rapide e Aggiornamento Massivo</h5>", unsafe_allow_html=True)
             
-            col_m1, col_m2, col_m3, col_m4, col_m5 = st.columns([2, 2, 1.5, 2, 2])
+            # Compattiamo i campi usando una colonna vuota alla fine per spingere tutto a sinistra
+            col_m1, col_m2, col_m3, col_m4, col_m5, _ = st.columns([1.5, 1.5, 1, 1, 1.2, 1])
             subcat_uniche = sorted(st.session_state.rinnovi_df['Sub-Categoria'].unique().tolist())
             
             with col_m1:
@@ -1615,12 +1616,12 @@ elif menu == "Rinnovi Contrattuali (N vs N+1)":
                 val_mass = st.number_input("3. Valore (%)", min_value=-100.0, max_value=100.0, step=0.5, format="%.2f")
             with col_m4:
                 st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
-                btn_mass = st.form_submit_button("⚡ Applica Valore", type="secondary")
+                btn_mass = st.form_submit_button("⚡ Applica", type="secondary")
             with col_m5:
                 st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
-                submit_sim = st.form_submit_button("🔄 Calcola Simulazione", type="primary")
+                submit_sim = st.form_submit_button("🔄 Calcola Griglia", type="primary")
                 
-            st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
+            st.markdown("<hr style='margin: 10px 0; border-color: #E2E2D8;'>", unsafe_allow_html=True)
             
             df_sim_edited = st.data_editor(
                 df_display[cols_to_edit],
