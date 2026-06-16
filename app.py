@@ -862,26 +862,29 @@ if menu == "Simulatore Offerte":
     st.divider()
 
     # Aggiungiamo una terza colonna vuota "_" che funge da spaziatore a destra
-    col_met1, col_met2, _ = st.columns([1.5, 1.5, 1])
+    col_met1, col_met2, _ = st.columns([1.5, 1.5, 1]) # Terza colonna vuota per compattare
+    
     with col_met1:
-        st.markdown("#### Metodologia di Calcolo")
-        metodo_lavoro = st.radio(
-            "Seleziona l'approccio negoziale:",
-            ["A. Partenza da Prezzo Target (Calcolo automatico Sconto Promo)", "B. Tentativi Spot Manuali (Immissione Sconto Promo libera)"],
-            horizontal=False,
-            label_visibility="collapsed",
-            key="widget_metodo"
-        )
+        with st.container(border=True):
+            st.markdown("<h5 style='color: #5A6340; margin-bottom: 10px;'>⚙️ Metodologia di Calcolo</h5>", unsafe_allow_html=True)
+            metodo_lavoro = st.radio(
+                "Approccio negoziale:",
+                ["A. Prezzo Target (Z Automatica)", "B. Leve Manuali (Z Libera)"],
+                horizontal=False,
+                label_visibility="collapsed",
+                key="widget_metodo"
+            )
 
     with col_met2:
-        if "A. Partenza" in metodo_lavoro:
-            st.markdown("#### Obiettivo Economico")
-            target_net_net = st.number_input(
-                "PREZZO TARGET NET NET DESIDERATO (Euro/Pz)", 
-                min_value=0.0, 
-                value=float(min_net_net_g), 
-                step=0.10
-            )
+        if "A. Prezzo" in metodo_lavoro:
+            with st.container(border=True):
+                st.markdown("<h5 style='color: #5A6340; margin-bottom: 10px;'>🎯 Obiettivo Economico</h5>", unsafe_allow_html=True)
+                target_net_net = st.number_input(
+                    "Target Net Net (AM) desiderato [€/Pz]", 
+                    min_value=0.0, 
+                    value=float(min_net_net_g), 
+                    step=0.10
+                )
         else:
             target_net_net = 0.0
 
@@ -890,21 +893,20 @@ if menu == "Simulatore Offerte":
     col_l1, col_l2 = st.columns(2)
     
     with col_l1:
-        st.markdown("#### Scontistiche Utilizzabili")
         with st.container(border=True):
+            st.markdown("<h5 style='color: #5A6340; margin-bottom: 10px;'>📉 Scontistiche Utilizzabili</h5>", unsafe_allow_html=True)
+            
             sconto_y = st.number_input("Sconto Continuativo Y (%)", min_value=0.0, max_value=100.0, value=float(contract.sconto_y or 0.0), step=0.5)
             if contract.sconto_y and float(contract.sconto_y) > 0:
-                st.markdown(f"<div class='alert-box alert-warning'>ATTENZIONE - SE LO SCONTO CONTINUATIVO DERIVA DA UN ACCORDO LOCALE NON LO SI PUO' VARIARE SENZA UN NUOVO ACCORDO - valore attuale: {fmt_it(float(contract.sconto_y), is_pct=True)}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='alert-box alert-warning' style='margin-top: 5px; padding: 8px 12px;'>⚠️ Sconto Y ereditato da Accordo Locale: {fmt_it(float(contract.sconto_y), is_pct=True)}</div>", unsafe_allow_html=True)
             
-            if "A. Partenza" in metodo_lavoro:
-                st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
-                st.markdown("<h5 style='color: #1A3E2F; margin-bottom: 5px;'>Leva Promozionale Diretta</h5>", unsafe_allow_html=True)
+            st.divider() # Linea divisoria interna pulita
+            
+            if "A. Prezzo" in metodo_lavoro:
                 sconto_aa = st.number_input("Sconto Unitario in fattura (Euro/Pz) [AA]", min_value=0.0, step=0.05, key="widget_aa")
                 sconto_z_input = 0.0
             else:
-                st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
-                st.markdown("**Leve Promozionali**")
-                sconto_z_input = st.number_input("Sconto Promozionale (%) [Z] (Manuale)", min_value=0.0, max_value=100.0, step=0.5, key="widget_z")
+                sconto_z_input = st.number_input("Sconto Promozionale (%) [Z]", min_value=0.0, max_value=100.0, step=0.5, key="widget_z")
                 sconto_aa = st.number_input("Sconto Unitario in fattura (Euro/Pz) [AA]", min_value=0.0, step=0.05, key="widget_aa")
                 
             sconto_z = safe_dec(sconto_z_input)
@@ -912,39 +914,32 @@ if menu == "Simulatore Offerte":
     # Input protetto per il PricingEngine
     engine_input = PricingInput(
         listino_r=safe_dec(contract.listino_r),
-        sconto_1=safe_dec(contract.sconto_1),
-        sconto_2=safe_dec(contract.sconto_2),
-        sconto_3=safe_dec(contract.sconto_3),
-        sconto_4=safe_dec(contract.sconto_4),
-        sconto_5=safe_dec(contract.sconto_5),
-        sconto_6=safe_dec(contract.sconto_6),
-        sconto_7=safe_dec(contract.sconto_7),
-        sconto_y=safe_dec(sconto_y),
-        sconto_z=sconto_z,
-        sconto_aa=safe_dec(sconto_aa),
-        sconto_carico=safe_dec(contract.sconto_carico),
-        sconto_pagamento=safe_dec(contract.sconto_pagamento),
-        voce_i=safe_dec(contract.voce_i),
-        voce_ii=safe_dec(contract.voce_ii),
-        voce_iii=safe_dec(contract.voce_iii),
-        voce_iv=safe_dec(contract.voce_iv),
-        voce_v=safe_dec(contract.voce_v),
-        min_net_net_g=safe_dec(min_net_net_g)
+        sconto_1=safe_dec(contract.sconto_1), sconto_2=safe_dec(contract.sconto_2),
+        sconto_3=safe_dec(contract.sconto_3), sconto_4=safe_dec(contract.sconto_4),
+        sconto_5=safe_dec(contract.sconto_5), sconto_6=safe_dec(contract.sconto_6),
+        sconto_7=safe_dec(contract.sconto_7), sconto_y=safe_dec(sconto_y),
+        sconto_z=sconto_z, sconto_aa=safe_dec(sconto_aa),
+        sconto_carico=safe_dec(contract.sconto_carico), sconto_pagamento=safe_dec(contract.sconto_pagamento),
+        voce_i=safe_dec(contract.voce_i), voce_ii=safe_dec(contract.voce_ii),
+        voce_iii=safe_dec(contract.voce_iii), voce_iv=safe_dec(contract.voce_iv),
+        voce_v=safe_dec(contract.voce_v), min_net_net_g=safe_dec(min_net_net_g)
     )
 
-    if "A. Partenza" in metodo_lavoro:
+    if "A. Prezzo" in metodo_lavoro:
         target_dec = safe_dec(target_net_net)
         sconto_z = PricingEngine.calculate_inverse(target_dec, engine_input, "Z")
         engine_input = replace(engine_input, sconto_z=sconto_z)
 
     with col_l2:
-        st.markdown("#### Limiti Promozionali per il net net minimo - valori di riferimento - nel caso A è lo sconto applicato")
         with st.container(border=True):
-            if "A. Partenza" in metodo_lavoro:
+            st.markdown("<h5 style='color: #5A6340; margin-bottom: 10px;'>🛑 Limiti di Sicurezza (Soglia Floor)</h5>", unsafe_allow_html=True)
+            st.info("I valori indicano lo sconto massimo applicabile prima di generare perdite.", icon="ℹ️")
+            
+            if "A. Prezzo" in metodo_lavoro:
                 engine_max_z = replace(engine_input, sconto_z=Decimal("0.00"))
                 z_max_consentito = PricingEngine.calculate_inverse(safe_dec(min_net_net_g), engine_max_z, "Z")
                 st.number_input("Sconto Promo MAX Consentito [Z]", value=float(z_max_consentito), disabled=True, format="%.2f")
-                st.markdown("<div style='height: 85px;'></div>", unsafe_allow_html=True) 
+                st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True) # Spaziatore per pareggiare le altezze
             else:
                 engine_max_z = replace(engine_input, sconto_z=Decimal("0.00"))
                 z_max_consentito = PricingEngine.calculate_inverse(safe_dec(min_net_net_g), engine_max_z, "Z")
