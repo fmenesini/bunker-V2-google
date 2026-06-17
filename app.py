@@ -3254,7 +3254,7 @@ else:
         *   **Sconti in Fattura (S1, S2, S3, S4, S5, S6, S7, Y, Z):** Sono gli sconti in percentuale che si applicano direttamente sulla fattura. Abbassano fisicamente l'imponibile e il prezzo di acquisto del cliente.
         *   **Sconto Diretto in € (AA):** Invece di una percentuale, è uno sconto in Euro fisso (es. ti tolgo -0,50 € a bottiglia).
         *   **Oneri Logistica (AB) / Pagamento (AC):** Trattenute (in %) applicate dal cliente perché ci gestisce il magazzino centralizzato o per i termini di pagamento.
-        *   **Premi Fuori Fattura / Off-Invoice (PFA):** Sono i famosi "Premi di Fine Anno" (Voci I, II, III...). L'azienda restituisce al cliente una percentuale sui volumi venduti. *Nota bene: riducono il nostro guadagno, ma non abbassano il prezzo a scaffale del supermercato!*
+        *   **Premi Fuori Fattura / Off-Invoice (PFA):** Sono i famosi "Premi di Fine Anno" (Voci I, II, III...). L'azienda restituisce al cliente una percentuale sui volumi venduti. *Nota bene: riducono il nostro guadagno, ma non abbassano il prezzo in fattura*
         *   **NET-NET FINALE (AM):** È il **vero ricavo**. Sono i soldi che rimangono fisicamente in tasca all'azienda per ogni bottiglia venduta, dopo aver pagato TUTTI gli sconti, gli oneri e i premi.
         *   **Soglia Floor / Minimo Net-Net (G):** È la linea rossa tracciata dalla Direzione. È il costo sotto il quale non si può scendere. Se il tuo *Net-Net Finale* scende sotto il *Floor*, il sistema farà scattare l'allarme 🔴 **ROSSO**.
         
@@ -3283,9 +3283,9 @@ else:
         st.markdown("""
         L'app funziona con una regola a piramide. Esistono 5 livelli (dal più grande al più piccolo):
         1. **GRUPPO GDO** (Es. COOP ITALIA)
-        2. **SOTTOGRUPPO** (Es. COOP NORD OVEST)
+        2. **SOTTOGRUPPO** (Es. SOTTO GRUPPO IPERMERCATI)
         3. **CATEGORIA** (Es. Tutti gli Extravergini)
-        4. **INSEGNA LOCALE** (Es. Ipercoop di zona)
+        4. **INSEGNA LOCALE** (Es. COOP NORD OVEST)
         5. **REFERENZA SKU** (La singola bottiglia)
 
         **Regola dell'Ereditarietà (Celle Vuote):**
