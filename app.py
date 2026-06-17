@@ -3234,126 +3234,144 @@ elif menu == "Report Sintetico":
 # SCHEDA 5: GUIDA OPERATIVA (MANUALE UTENTE COMPLETO)
 # ==========================================
 else:
-    st.title("📚 Manuale Operativo e Linee Guida")
-    st.markdown("### Guida all'uso di 'Bunker Commerciale - Salov'")
-    st.markdown("Benvenuto nel sistema aziendale per il governo della marginalità. Questa guida spiega le logiche di calcolo del software e fornisce le istruzioni passo-passo per condurre le simulazioni commerciali in totale sicurezza.")
+    st.title("📚 Manuale Operativo e Guida all'Uso")
+    st.markdown("### Benvenuto in 'Bunker Commerciale - Salov'")
+    st.markdown("""
+    Questo programma è il tuo "navigatore" per le trattative commerciali. Ti aiuta a calcolare esattamente quanto 
+    guadagnerà l'azienda (Margine Netto) dopo aver concesso sconti, premi e volantini alla GDO, evitandoti di scendere sotto i limiti di sicurezza.
+    
+    Se è la prima volta che usi il programma, leggi questa guida: è scritta in modo semplice e passo-passo.
+    """)
     
     st.divider()
 
-    with st.expander("📖 1. GLOSSARIO: I termini tecnici da conoscere", expanded=True):
+    with st.expander("📖 1. IL GLOSSARIO BASE (I termini da conoscere)", expanded=True):
         st.markdown("""
-        Per utilizzare correttamente il simulatore, è fondamentale condividere lo stesso vocabolario tecnico:
+        Per non fare confusione, ecco cosa significano i termini che troverai nell'app:
 
-        *   **Listino Base (R):** È il prezzo di listino ufficiale Salov, al lordo di qualsiasi sconto.
-        *   **Sconti in Fattura (S1... S7, Y, Z):** Sconti percentuali applicati direttamente in fattura. Riducono l'imponibile. Si dividono in *Centrali* (definiti dall'Accordo Quadro) e *Locali/Promo* (definiti per singole attività).
-        *   **Sconto Diretto (AA):** È un "Taglio Prezzo" espresso in Valore Absoluto (Euro), non in percentuale (es. -0,50 € a bottiglia).
-        *   **Oneri Logistici (AB) e di Pagamento (AC):** Trattenute percentuali applicate dal cliente per la gestione centralizzata del magazzino o per i flussi finanziari.
-        *   **Netto Fattura 2 (AF):** Il prezzo reale a cui il prodotto viene fatturato, calcolato dopo aver applicato tutti gli sconti e gli oneri.
-        *   **Premi Fuori Fattura / Off-Invoice (PFA):** (Voci I, II, III, ecc.). Sono i contributi di fine anno o fine periodo richiesti dalla GDO (es. premi di fine anno, contributi assortimento). *Riducono il nostro margine, ma non abbassano il prezzo a scaffale del cliente*.
-        *   **NET-NET FINALE (AM):** È il ricavo reale e pulito per l'azienda. Si ottiene sottraendo i PFA dal Netto Fattura.
-        *   **Minimo Net-Net:** È la soglia minima di redditività fissata dall'azienda per una specifica referenza. Scendere sotto questo valore significa vendere in perdita.
-        *   **Floor (G) / Guardrail Aziendale:** Rappresenta il limite fisico e invalicabile impostato dalla Direzione nel database, il "pavimento" sotto il quale il sistema blocca l'operazione. Agisce come un vero e proprio salvavita.
-            * *Esempio pratico:* Immagina che produrre, imbottigliare e consegnare una bottiglia di Extravergine costi 3,50 €. L'azienda fissa il Floor (G) a 3,80 € per garantirsi la sopravvivenza e coprire i costi fissi. Se durante una negoziazione concedi un mix di sconti, premi di fine anno e contributi volantino che fa crollare il tuo ricavo reale a 3,75 €, il sistema farà scattare il semaforo **ROSSO**. Ti avviserà immediatamente che stai "bucando il Floor", distruggendo valore per 0,05 € su ogni singola bottiglia venduta.
-        *   **Spazio Promo MAX (% o €):** Indica il margine di manovra residuo. È la differenza tra il prezzo simulato e il Floor minimo aziendale.
+        *   **Listino Base (R):** È il prezzo di "listino ufficiale" della singola bottiglia (es. 10,00 €), prima di qualsiasi sconto.
+        *   **Sconti in Fattura (S1, S2, S3, S4, S5, S6, S7, Y, Z):** Sono gli sconti in percentuale che si applicano direttamente sulla fattura. Abbassano fisicamente l'imponibile e il prezzo di acquisto del cliente.
+        *   **Sconto Diretto in € (AA):** Invece di una percentuale, è uno sconto in Euro fisso (es. ti tolgo -0,50 € a bottiglia).
+        *   **Oneri Logistica (AB) / Pagamento (AC):** Trattenute (in %) applicate dal cliente perché ci gestisce il magazzino centralizzato o per i termini di pagamento.
+        *   **Premi Fuori Fattura / Off-Invoice (PFA):** Sono i famosi "Premi di Fine Anno" (Voci I, II, III...). L'azienda restituisce al cliente una percentuale sui volumi venduti. *Nota bene: riducono il nostro guadagno, ma non abbassano il prezzo a scaffale del supermercato!*
+        *   **NET-NET FINALE (AM):** È il **vero ricavo**. Sono i soldi che rimangono fisicamente in tasca all'azienda per ogni bottiglia venduta, dopo aver pagato TUTTI gli sconti, gli oneri e i premi.
+        *   **Soglia Floor / Minimo Net-Net (G):** È la linea rossa tracciata dalla Direzione. È il costo sotto il quale non si può scendere. Se il tuo *Net-Net Finale* scende sotto il *Floor*, il sistema farà scattare l'allarme 🔴 **ROSSO**.
+        
+        👉 *Esempio: Se produrre una bottiglia costa 3,80 € (Floor G) e a causa dei troppi sconti la stai vendendo a un Net-Net di 3,75 €, stai distruggendo valore per 0,05 € a bottiglia.*
         """)
         
-    with st.expander("🧮 2. LA MECCANICA DEGLI SCONTI: La 'Cascata' e il Sell-Out", expanded=False):
+    with st.expander("🧮 2. LA MATEMATICA DEGLI SCONTI (Come fa i conti il sistema?)", expanded=False):
         st.markdown("""
-        **La Cascata Geometrica (Sconti in Fattura)**
-        Il software non fa mai la somma algebrica degli sconti in fattura (es. 10% + 5% NON fa 15%). Il calcolo è **sequenziale**: ogni sconto si calcola sul valore residuo lasciato dallo sconto precedente.
+        Il software calcola gli sconti esattamente come fa il gestionale aziendale, ovvero con due logiche diverse:
 
-        *Esempio di Calcolo in Fattura:*
-        *   **Listino Base:** 10,00 €
-        *   **Sconto 1 (10%):** 10,00 * (1 - 0.10) = **9,00 €**
-        *   **Sconto 2 (5%):** 9,00 * (1 - 0.05) = **8,55 €**
-        *   **Sconto Promo Z (10%):** 8,55 * (1 - 0.10) = **7,695 €**
-        *   **Sconto Diretto AA (-0,20 €):** 7,695 - 0,20 = **7,495 €**
-        *   **Oneri Logistica (2%):** 7,495 * (1 - 0.02) = **7,345 € (Netto Fattura)**
+        **A) La Cascata (Per gli sconti in fattura S1-S5, Y, Z)**
+        Il sistema **NON fa la somma normale**. Se fai uno sconto del 10% + 5%, il risultato NON è 15%. Gli sconti si calcolano uno dopo l'altro sul residuo.
+        *   *Prezzo di Listino:* 10,00 €
+        *   *Applico S1 (10%):* 10,00 - 10% = 9,00 €
+        *   *Applico S2 (5%):* Il 5% si calcola su 9,00 €! Quindi 9,00 - 5% = 8,55 €.
+        *(Se avessimo fatto la somma 10+5=15%, il risultato sarebbe stato 8,50 €. Il sistema ti salva da questi errori).*
 
-        **La Somma Algebrica (Premi Fuori Fattura - PFA)**
-        A differenza degli sconti in fattura, i PFA si **sommano algebricamente** tra loro prima di essere applicati. Se hai un Premio Base del 2% e un Contributo Volantino dell'1%, il sistema calcolerà un 3% totale sul Netto Fattura.
-        *   *Calcolo Net-Net:* 7,345 € * (1 - 0.03) = **7,124 € (Net-Net Finale)**.
+        **B) La Somma Normale (Per i Premi PFA I-V)**
+        I Premi Fuori Fattura, invece, si sommano algebricamente. Se hai pattuito un premio Base del 2% e un premio Volantino dell'1%, il sistema toglierà il 3% totale dal Netto Fattura.
 
-        **I Contributi Extra (Sell-Out / Volantino)**
-        Se durante una promo concedi un contributo fisso (es. 500 € per una testata gondola) a fronte di 10.000 bottiglie stimate:
-        *   Impatto unitario: 500 € / 10.000 pz = **0,05 € a bottiglia**.
-        *   Il tuo Net-Net reale scenderà da 7,124 € a **7,074 €**. Il sistema calcola questo impatto per verificare che tu non scenda sotto il Floor minimo.
+        **C) Impatto dei Soldi Fissi (Costi Extra / Sell-Out)**
+        Se un supermercato ti chiede 500 € fissi per mettere il tuo olio in testata di gondola, il sistema ti chiederà "Quante bottiglie pensi di vendere?". Se rispondi 10.000 bottiglie, il sistema calcolerà: `500 € / 10.000 = 0,05 €`. Questo costo verrà tolto al tuo Net-Net Finale per dirti se, post-volantino, stai perdendo soldi.
         """)
 
-    with st.expander("🧬 3. LA GERARCHIA DEI CONTRATTI: La regola del 'Top-Down Lock'", expanded=False):
+    with st.expander("🧬 3. LA GERARCHIA DEI CONTRATTI (Perché le celle vuote si riempiono da sole?)", expanded=False):
         st.markdown("""
-        Il database contratti funziona con una logica a 5 livelli. Vige la regola del **Blocco dall'Alto (Top-Down Lock)**: se un livello superiore fissa una condizione, i livelli inferiori non possono modificarla o cancellarla.
-        
-        **I 5 Livelli (dal più forte al più debole):**
-        1. **GRUPPO MACRO** (es. *COOP ITALIA*) ➔ Accordo Quadro Nazionale.
-        2. **SOTTOGRUPPO** (es. *COOP NORD OVEST*) ➔ Accordi interregionali.
-        3. **CATEGORIA** (es. *EXTRAVERGINE*) ➔ Regole valide solo per una specifica famiglia di prodotti.
-        4. **ASSOCIATO / INSEGNA** (es. *IPERCOOP LOCALE*) ➔ Accordi del singolo punto vendita o associato.
-        5. **REFERENZA (EAN)** ➔ La singola bottiglia. Qui risiede il Listino Base (R).
+        L'app funziona con una regola a piramide. Esistono 5 livelli (dal più grande al più piccolo):
+        1. **GRUPPO GDO** (Es. COOP ITALIA)
+        2. **SOTTOGRUPPO** (Es. COOP NORD OVEST)
+        3. **CATEGORIA** (Es. Tutti gli Extravergini)
+        4. **INSEGNA LOCALE** (Es. Ipercoop di zona)
+        5. **REFERENZA SKU** (La singola bottiglia)
 
-        **Casi Pratici di Inserimento Dati:**
-        *   **L'Ereditarietà (Cella Vuota):** Se il Gruppo Macro ha uno Sconto 1 del 10%, non serve riscriverlo sulle singole referenze. Lasciando la cella vuota, il sistema erediterà automaticamente il 10%.
-        *   **L'Override (Forzare l'esclusione):** Se una specifica referenza Premium NON deve ricevere lo Sconto 1 del 10% stabilito dal Gruppo, devi inserire esplicitamente il valore **`0.0`** nella riga di quella referenza. Questo `0.0` funge da scudo e blocca l'ereditarietà.
-        *   **Fuori Assortimento:** Se una referenza non ha un Listino Base (R) associato, il sistema la bloccherà indicando "Prodotto Fuori Assortimento".
+        **Regola dell'Ereditarietà (Celle Vuote):**
+        Se a livello di GRUPPO hai pattuito uno Sconto Centrale (S1) del 15%, non devi andarlo a riscrivere per tutte le singole bottiglie! Se la riga della bottiglia è vuota, lei "eredita" il 15% dal gruppo.
+
+        **Regola del Blocco (Mettere 0.0):**
+        Se hai un Olio Premium speciale su cui NON vuoi fare quello Sconto del 15%, devi entrare nel Back-Office e sulla riga di quell'olio scrivere **0.0** nella colonna S1. Questo numero agirà da "tappo" e impedirà allo sconto di scendere dal Gruppo a quella bottiglia.
         """)
         
-    with st.expander("📞 4. COME USARE IL 'SIMULATORE OFFERTE' (Singola Referenza)", expanded=False):
+    with st.expander("📞 4. SIMULATORE OFFERTE (Esempi pratici di trattativa)", expanded=False):
         st.markdown("""
-        Questa scheda è lo strumento tattico da usare durante una trattativa rapida su un singolo prodotto.
-        
-        **Modalità A: Partenza da Prezzo Target (Consigliata)**
-        Da usare quando il Buyer fissa un obiettivo di prezzo. Esempio: *"Voglio pagare questa bottiglia 3,80 € netti"*.
-        1. Seleziona la Modalità A.
-        2. Inserisci `3.80` nel campo "Prezzo Target Net Net".
-        3. Il sistema calcolerà automaticamente la percentuale esatta di **Sconto Promozionale [Z]** necessaria per arrivare a quel risultato; questo valore varia dinamicamente ma non è modificabile direttamante in quanto va a garantire il rispetto del limite net net pre impostato
-        4. Se 3,80 € è inferiore al minimo aziendale (Floor), il sistema mostrerà l'avviso in **ROSSO**, indicando la perdita esatta.
-        5. Le uniche leve utilizzabili sono lo Sconto continuativo % (da utilizzare previa verifica di accordo locale) e lo sconto unitario in fattura. Al variare di questi lo Sconto Promozionale si adatterà di conseguenza.
+        Questa è la tua "calcolatrice da battaglia", lo strumento tattico da usare tutti i giorni mentre sei al telefono o in riunione con un Buyer per chiudere una promozione.
 
-        **Modalità B: Tentativi Spot Manuali**
-        Da usare per simulazioni libere.
-        1. Inserisci manualmente le percentuali di Sconto Promo [Z] o lo Sconto in Euro [AA].
-        2. Controlla i campi **Sconto Promo MAX** e **Sconto Unitario MAX**: ti indicano il limite massimo che puoi concedere prima che il semaforo diventi rosso.
+        Ecco come affrontare una simulazione tipica passo dopo passo:
+
+        **Passo 1: Il Contesto (Con chi sto parlando?)**
+        *   **Esempio:** Ti chiama il Buyer di *Conad Adriatico*. Tu selezioni nel menu l'Insegna *Conad Adriatico* e la Referenza *Extravergine Sagra Classico 1L*.
+        *   In un decimo di secondo, il sistema carica il Listino Base (es. 10,00 €), eredita tutti gli sconti contrattuali della capogruppo *Conad* (S1, S2, PFA, ecc.) e recupera il Limite Aziendale di Sopravvivenza (Floor), mettiamo che sia **4,00 €**.
+        *   *Nota visiva:* Sulla destra vedrai subito il Badge che ti dice da dove sta prendendo i dati (es. *SOTTOGRUPPO* o *REFERENZA*).
+
+        **Passo 2: La Trattativa (Hai due armi a disposizione)**
+        
+        🔴 **METODO A (Partenza da Prezzo Target) - La via più rapida**
+        Si usa quando il Buyer ti impone un prezzo di arrivo netto.
+        *   **La Scena:** Il Buyer ti dice: *"Ti metto nel volantino di Pasqua, ma la bottiglia te la pago massimo 4,20 € netti finiti"*.
+        *   **Cosa fai tu:** Selezioni il Metodo A e scrivi `4.20` nel campo "Prezzo Target". 
+        *   **La Magia:** Non devi prendere la calcolatrice per fare i calcoli all'indietro. Il sistema ti dice istantaneamente: *"Guarda che per far pagare la bottiglia esattamente 4,20€ a Conad, considerando che hanno già il 15% di sconto base e il 3% di oneri logistici, tu devi inserire a gestionale uno **Sconto Promozionale (Z)** dell' **8,45%**"*.
+        *   **Il Controllo:** Visto che 4,20 € è maggiore del tuo Floor (4,00 €), il semaforo in basso diventa Verde. Affare fatto.
+
+        ⚪ **METODO B (Tentativi Manuali) - La via classica**
+        Si usa quando sei tu a proporre uno sconto in fattura.
+        *   **La Scena:** Sei tu che chiami il Buyer e dici: *"Questo mese ti do un 10% di sconto extra (Z) e ti tolgo anche 0,10 € a bottiglia in fattura (Sconto AA)"*.
+        *   **Cosa fai tu:** Inserisci `10.0` nel campo *Sconto Promozionale Z* e `0.10` nel campo *Sconto Unitario AA*.
+        *   **Il Controllo:** Guarda il riquadro a destra "Limiti di Sicurezza". Ti dirà, ad esempio, che lo Sconto Z massimo che puoi concedere prima di finire in perdita è l'11%. Visto che hai inserito il 10%, sei salvo.
+
+        **Passo 3: I Costi Nascosti (Il Volantino e gli Spazi Espositivi)**
+        Spesso le trattative non finiscono col prezzo del prodotto. Il Buyer ti chiede anche dei soldi per farti comparire sul volantino.
+        *   **La Scena:** Hai accordato il prezzo di 4,20 € a bottiglia (Semaforo Verde). Poi il Buyer aggiunge: *"Però mi devi dare anche 1.000 € fissi per metterti in prima pagina sul volantino"*. 
+        *   **Cosa fai tu:** Vai nella sezione "Contributi Extra". Scrivi `5000` nei *Volumi Stimati* (i pezzi che pensi di vendere grazie alla promo) e `1000` nel *Contributo Fisso*.
+        *   **La Doccia Fredda:** Il sistema calcola che 1.000 € divisi per 5.000 bottiglie pesano per **0,20 € a bottiglia**. Il tuo ricavo netto non è più 4,20 €, ma scende a **4,00 € netti**. 
+        *   Visto che il tuo Floor è proprio 4,00 €, sei sul filo del rasoio. Se vendi meno di 5000 bottiglie, andrai in perdita. Il sistema ti avvisa con un box di allerta colorato e nel Grafico a Cascata vedrai spuntare una barra Gialla che ti mostra i soldi "mangiati" dal volantino.
+
+        **Passo 4: Chiudere la partita (Salvataggio)**
+        *   Il Grafico a cascata ti mostra tutto il viaggio dei soldi: da Listino di 10€, allo Sconto Base, allo Sconto Promo, ai Premi a fine anno, fino ai soldi finali in tasca.
+        *   Vai in fondo: metti le date di Sell-in e Sell-out, scrivi una nota (es. *"Promo Pasqua Ipercoop"*), e premi **Salva nel CRM** (rimarrà in archivio per sempre).
+        *   Premi **Scarica Excel** per avere un foglio pulito, elegante e già intestato da girare in PDF alla Direzione Commerciale o al Buyer per confermare gli accordi.
         """)
         
-    with st.expander("📊 5. COME USARE LA 'MASTER GRID RINNOVI' (Simulazione N vs N+1)", expanded=False):
+    with st.expander("📊 5. RINNOVI CONTRATTUALI (Come affrontare la negoziazione annuale)", expanded=False):
         st.markdown("""
-        Questa scheda è lo strumento strategico per i rinnovi annuali. Permette di simulare l'intero portafoglio prodotti di un cliente in un'unica schermata, partendo dagli aggregati fino ad arrivare al dettaglio delle singole voci contrattuali.
-        
-        **Flusso di Lavoro Passo-Passo:**
-        
-        **FASE 1: Setup e Condizioni Globali**
-        1. **Identifica il Cliente:** Seleziona il *Gruppo GDO* e il *Sottogruppo* dai menu a tendina.
-        2. **Importa lo Storico:** Clicca su **"Carica Condizioni Attuali da DB"**. Il sistema popolerà le colonne dell'Anno [N] con i listini e gli sconti attualmente in vigore.
-        3. **Imposta gli Oneri Globali:** In cima al Tab 1, verifica e imposta lo **Sconto Carico Logistica (%)** e lo **Sconto Pagamento (%)**. *Attenzione: questi due valori vengono applicati a cascata su TUTTE le referenze attive e abbattono direttamente il Net Net finale.*
+        Mentre il Simulatore (Punto 4) serve per "fare il prezzo" su una singola bottiglia, questa scheda è la plancia di comando per l'accordo annuale. Si usa per simulare **tutto il portafoglio prodotti** di un cliente in una sola volta (Passaggio dall'Anno N all'Anno N+1).
 
-        **FASE 2: Tab 1 - Griglia di Simulazione (Gli Aggregati)**
-        1. **Attiva le Referenze:** Inserisci i volumi previsti nella colonna `[N+1] Volumi`. *Il sistema calcolerà e mostrerà nei risultati SOLO le righe con volumi maggiori di zero.*
-        2. **Imposta i Target:** Agisci sulle colonne `[N+1] Listino €`, `[N+1] Sc. Fattura %` (il totale degli sconti in fattura) e `[N+1] Contratto %` (il totale dei premi fuori fattura).
-        3. **Calcola:** Clicca su **"🔄 Calcola Simulazione"**.
-        4. **Verifica lo Spazio Promo:** Controlla la colonna `Sc. Promo MAX [N+1] %`. Questo valore ti dice quanto sconto volantino potrai fare durante l'anno prima di bucare il limite minimo aziendale (Floor). Modifica i target finché non ottieni lo Spazio Promo desiderato.
+        Il lavoro è diviso in 4 Schede (Tab). Ecco come condurre un rinnovo tipico:
 
-        **FASE 3: Tab 2 - Analisi Ponderata (L'Effetto "Pollo di Trilussa")**
-        In questa scheda vedi la sintesi economica. I risultati sono raggruppati per Categoria e Sub-Categoria. 
-        *Perché è fondamentale?* Un cliente potrebbe avere un margine totale positivo (Verde) perché muove enormi volumi di Olio di Semi, ma nascondere una forte perdita (Rosso) sugli Extravergini. Il sistema calcola la media ponderata sui volumi per evidenziare se un cluster specifico sta distruggendo valore.
+        👉 **TAB 1: Master Grid (La Preparazione e gli Obiettivi)**
+        *   **La Scena:** È Novembre, devi preparare il rinnovo per il gruppo *Selex*.
+        *   **Passo 1 (Carica il passato):** Seleziona il gruppo e premi il tasto rosso **Carica Baseline 🔄**. Il sistema andrà a pescare dal database tutti i listini, gli sconti in fattura e i premi di fine anno (PFA) attualmente in vigore per quel cliente (Anno N).
+        *   **Passo 2 (Inserisci i Volumi):** Questa è la regola d'oro. Se una referenza ha volume 0, il sistema la ignora. Inserisci quanti pezzi prevedi di vendere nell'anno N+1.
+        *   **Passo 3 (Lavora sui Target in massa):** Ora devi impostare la strategia. Mettiamo che l'azienda ti abbia chiesto di aumentare i listini base del 5% per via del costo dell'olio. Invece di farlo riga per riga, vai nello strumento **⚡ Azioni Rapide**, seleziona *Tutto l'assortimento*, scegli *Aumento Listino Base (%)*, scrivi `5.00` e premi applica. In un secondo, tutta la colonna "Listino N+1" si aggiornerà. Fai lo stesso per i target di sconto in fattura e i PFA.
 
-        **FASE 4: Tab 3 - Esplosione Sconti (Il Dettaglio Contrattuale)**
-        Una volta che i target aggregati nel Tab 1 ti soddisfano, devi "spacchettarli" nelle reali voci del contratto nazionale (S1, S2, PFA I, ecc.).
-        1. **Modifica Manuale:** Inserisci i valori noti (es. S1 al 10%, S2 al 2%).
-        2. **Verifica:** Clicca su **"🔄 Calcola e Verifica Sconti (Manuale)"**. Il sistema calcolerà la cascata geometrica e ti mostrerà sotto "Diff. Fattura" quanto manca per raggiungere il target che avevi fissato nel Tab 1.
-        3. **La Magia (Auto-Allineamento):** Non impazzire con la calcolatrice! Clicca su **"🪄 Allinea Sconti Automaticamente"**. Il sistema calcolerà l'esatta percentuale geometrica mancante e la inserirà in **S5 %**, portando la differenza a zero. Farà la stessa cosa per i premi fuori fattura, inserendo la differenza algebrica in **PFA V %**.
-        4. **Trucco:** se vuoi agire su uno dei due sconti in fattura presenti senza doverne creare un terzo (l'S5 della simulazione) azzera uno degli sconti contrattuali, avvia la simulazione e poi sostituisci la colonna dello sconto contrattuale che vuoi modificare con i valori in S5. Ripeti l'allineamento automatico per evidenziare eventuali errori. 
-        
-        *Nota: In ogni Tab è presente un pulsante per scaricare la tabella corrente in Excel.*
+        👉 **TAB 2: Analisi Ponderata (L'Effetto "Pollo di Trilussa")**
+        *   **La Scena:** Hai finito di compilare il Tab 1. Guardi le righe: quasi tutte le referenze hanno un buon margine e il semaforo è verde. Sembra un ottimo rinnovo. Ma è davvero così?
+        *   **L'Insidia:** Mettiamo che tu guadagni molto sull'Extravergine, ma stai perdendo 5 centesimi a bottiglia sull'Olio di Semi di Girasole (per via del Listino N+1 troppo basso). Se vendi 10.000 Extravergini e 2 milioni di Oli di Girasole, il tuo contratto è un bagno di sangue per l'azienda.
+        *   **Cosa fa questo Tab:** Il sistema calcola il Net-Net non come media semplice, ma **pesandolo sui volumi che hai inserito**. Ti mostrerà, Categoria per Categoria, se il mix di prodotti che stai vendendo ti tiene a galla (Verde) o ti trascina sotto il limite aziendale (Rosso).
+
+        👉 **TAB 3: Esplosione Sconti (La Bacchetta Magica 🪄)**
+        *   **La Scena:** Nel Tab 1 avevi deciso che per arrivare al tuo obiettivo, lo sconto totale in fattura dovrà essere del **35%**. Il Buyer accetta. Ora devi tradurre quel 35% "generico" negli sconti reali del contratto (S1, S2, S3...).
+        *   **Il Problema:** Se metti S1=20% e S2=15%, per il sistema matematico a "cascata" (sconto su sconto) non fa 35%, ma fa 32%. Impazzire con la calcolatrice? No.
+        *   **Cosa fai tu:** 
+            1. Inserisci gli sconti fissi che già conosci (es. S1 al `20.0` e S2 al `5.0`).
+            2. Vai nello strumento **"Allinea Automaticamente"**. 
+            3. Dal menù a tendina scegli in quale "cassetto" far finire il resto dello sconto (es. seleziona `S5 %`).
+            4. Premi la Bacchetta Magica 🪄. Il sistema farà la matematica geometrica per te, calcolando l'esatto decimale (es. 12,28%) e lo scriverà in automatico nella colonna S5 di tutti i prodotti, centrando chirurgicamente il tuo 35% iniziale. Stessa cosa per i Premi di Fine Anno (PFA).
+
+        👉 **TAB 4: Proposte Salvate (Il cassetto delle bozze)**
+        *   Hai preparato il rinnovo di *Selex* per domani, ma vuoi farti tre versioni: una Ottimistica, una Realistica e una Pessimistica in cui cedi qualcosa in più.
+        *   Mentre sei nel Tab 1, in basso, dai un nome al tuo scenario (es. "Selex - Ipotesi Pessimistica") e salvalo.
+        *   Nel Tab 4 troverai tutte le tue bozze. Ti basterà premere "Ripristina Scenario Attivo" per ricaricare tutta l'enorme tabella a schermo esattamente come l'avevi lasciata.
         """)
-
-    with st.expander("🗄️ 6. STORICO (CRM), REPORTISTICA E BACK-OFFICE", expanded=False):
+    with st.expander("🗄️ 6. GESTIONE DATABASE E REPORTISTICA (Come mantenere l'app aggiornata)", expanded=False):
         st.markdown("""
-        *   **Storico Promozioni (CRM):** Ogni simulazione può essere salvata nel database (come "Proposta" o "Confermata"). In questa scheda puoi filtrare, consultare ed esportare in Excel tutte le trattative passate. Se hai commesso un errore, puoi eliminare il singolo record tramite il suo ID.
-        *   **Clona Promozione:** Nello Storico puoi selezionare una vecchia promo e cliccare "Clona". Il sistema ti riporterà al Simulatore precompilando tutti i campi, permettendoti di creare una nuova trattativa in secondi.
-        *   **Report Sintetico:** Genera un file Excel consolidato per un intero cliente. Mostra l'allineamento di tutti i prezzi e sconti, evidenziando immediatamente le referenze approvate (Verdi) e quelle sotto soglia (Rosse). È il documento ideale da condividere con la Direzione Commerciale.
-        *   **Back-Office (Import/Export Excel):** Per aggiornare massivamente le anagrafiche, i guardrail (Floor) o i contratti quadro, non occorre farlo riga per riga a schermo.
-            1. Scarica il Template Excel.
-            2. Modifica i dati sul tuo computer. **ATTENZIONE:** Assicurati che in Excel la colonna degli EAN sia formattata come "Testo", altrimenti Excel trasformerà i codici a barre in numeri scientifici (es. 8,0022E+12) corrompendo il database.
-            3. Ricarica il file tramite l'apposito pulsante.
-        *   **Danger Zone (Reset):** Il pulsante di Reset nella barra laterale (protetto da password) cancella tutto il database e ricarica i dati finti di test. Da usare solo in fase di training o manutenzione.
+        *   **Storico Promozioni:** È l'archivio di tutti i preventivi fatti col Simulatore. Puoi cercare una vecchia promo, esportarla o usare il tasto "Clona" per ricaricarla a schermo e ripartire da lì.
+        *   **Report Sintetico:** Crea una fotografia istantanea. Scegli un Cliente, premi il bottone e ti uscirà una tabella Excel già formattata che mette a confronto tutti i Listini, gli Sconti attivi e i Net-Net della famiglia di quel cliente, segnandoti in Verde i prodotti ok e in Rosso quelli in perdita. Ideale per le riunioni della Direzione.
+        *   **Accordi Locali (Promo):** In questa scheda si inseriscono **S6, S7 e Y**. Si chiamano locali perché si applicano SOLO all'Insegna territoriale specifica (es. solo al Conad Tirreno, e non a tutto il gruppo Conad).
+        *   **Dati Anagrafici e Back-Office Contratti Nazionali:** Servono a gestire i "motori" dell'app. Invece di modificare i dati riga per riga a schermo:
+            1. Premi "Scarica Excel".
+            2. Apri il file sul tuo computer e modifica in massa i dati.
+            3. Ricarica il file premendo "Upload". 
+            * ⚠️ **ATTENZIONE AGLI EAN SU EXCEL!** Excel odia i codici a 13 cifre e li trasforma in lettere (es. `8.00E+12`). Se provi a caricare un file così, il sistema si rifiuterà di leggerlo per non distruggere il database. Ricordati sempre di selezionare la colonna degli EAN in Excel e formattarla come "Testo".
         """)
