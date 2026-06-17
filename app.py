@@ -446,7 +446,7 @@ def seed_baseline_data(conn):
         ("8002210113110", "10003713", "EXTRAVERGINE", "TATTICO EXV BOT W12x1L CLASS IT", "Ex.v. Tattico Classico lt.1", 1.0, 10.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
         ("8002210135441", "10004256", "EXTRAVERGINE", "TATTICO EXV 100%R-PET V12x750ML IT", "Ex.v. Tattico lt.0,75 PET", 0.75, 7.50, "Pet.Lt 0,75", 12, 12, 5, 60, 14, 9),
         ("8002210117090", "10003718", "EXTRAVERGINE", "TATTICO GRAND EXV BOT W12x1L", "Ex.v. Tattico Grandioso lt.1", 1.0, 10.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
-        ("8002210129565", "10003722", "EXTRAVERGINE", "TATTICO T.VIVE EXV BOT W 12x1L", "Ex.v. Tattico Terre Vive lt.1", 1.0, 10.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210129565", "10003722", "EXTRAVERGINE", "TATTICO T.VIVE EXV BOT W 12x1L", "Ex.v. Tattico Terre Alte lt.1", 1.0, 10.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
         ("8002210121547", "10001540", "EXTRAVERGINE", "TATTICO PROF. EXV PET C2x5L IT", "Ex.v. Tattico Prof Lt.5", 5.0, 50.00, "Pet lt 5", 2, 17, 4, 68, 14, 9),
         ("8002210114832", "10003719", "EXTRAVERGINE", "TATTICO EXV 100%I BSA BOT W12x1L IT", "Ex.v. Tattico Alta Acidità 100% ITA lt.1", 1.0, 15.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
         ("8002210129431", "10003721", "EXTRAVERGINE", "TATTICO EXV 100%I BOT W 12x1L", "Ex.v. Tattico 100% Italiano lt.1", 1.0, 15.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
