@@ -3283,7 +3283,7 @@ else:
         st.markdown("""
         L'app funziona con una regola a piramide. Esistono 5 livelli (dal più grande al più piccolo):
         1. **GRUPPO GDO** (Es. COOP ITALIA)
-        2. **SOTTOGRUPPO** (Es. SOTTO GRUPPO IPERMERCATI)
+        2. **SOTTOGRUPPO** (Es. SOTTOGRUPPO COOP)
         3. **CATEGORIA** (Es. Tutti gli Extravergini)
         4. **INSEGNA LOCALE** (Es. COOP NORD OVEST)
         5. **REFERENZA SKU** (La singola bottiglia)
