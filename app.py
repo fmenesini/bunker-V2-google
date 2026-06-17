@@ -20,7 +20,7 @@ from core.validators import DataSanitizer
 logging.basicConfig(level=logging.WARNING)
 
 # Impostazione pagina
-st.set_page_config(page_title="Bunker Commerciale - Salov", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Bunker Commerciale - Olio S.p.A.", layout="wide", initial_sidebar_state="expanded")
 
 # ==========================================
 # FUNZIONI GLOBALI E COSTANTI DI SUPPORTO
@@ -442,70 +442,70 @@ def seed_baseline_data(conn):
         except sqlite3.OperationalError:
             conn.rollback()
     
-    prodotti_salov = [
-        ("8002210111110", "10002713", "EXTRAVERGINE", "SAGRA EXV BOT W12x1L CLASS IT", "Ex.v. Sagra Classico lt.1", 1.0, 10.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
-        ("8002210133440", "10003255", "EXTRAVERGINE", "SAGRA EXV 100%R-PET V12x750ML IT", "Ex.v. Sagra lt.0,75 PET", 0.75, 7.50, "Pet.Lt 0,75", 12, 12, 5, 60, 14, 9),
-        ("8002210115088", "10002716", "EXTRAVERGINE", "SAGRA GRAND EXV BOT W12x1L", "Ex.v. Sagra Grandulivo lt.1", 1.0, 10.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
-        ("8002210127562", "10002719", "EXTRAVERGINE", "SAGRA T.VIVE EXV BOT W 12x1L", "Ex.v. Sagra Terre Vive lt.1", 1.0, 10.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
-        ("8002210119543", "10000536", "EXTRAVERGINE", "SAGRA PROF. EXV PET C2x5L IT", "Ex.v. Sagra Prof Lt.5", 5.0, 50.00, "Pet lt 5", 2, 17, 4, 68, 14, 9),
-        ("8002210112827", "10002714", "EXTRAVERGINE", "SAGRA EXV 100%I BSA BOT W12x1L IT", "Ex.v. Sagra Bassa Acidità 100% ITA lt.1", 1.0, 15.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
-        ("8002210127425", "10002715", "EXTRAVERGINE", "SAGRA EXV 100%I BOT W 12x1L", "Ex.v. Sagra 100% Italiano lt.1", 1.0, 15.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
-        ("8002210128286", "10002720", "EXTRAVERGINE", "SAGRA EXV 100%I BIO BOT V12x1L IT", "Ex.v. Sagra Biologico 100% ITA lt.1", 1.0, 15.00, "Vetro lt 1", 12, 8, 5, 40, 14, 9),
-        ("8002210128248", "10002747", "EXTRAVERGINE", "SAGRA EXV BOT W12x750ML CLASS IT", "Ex.v. Sagra Classico lt.0,75", 0.75, 7.50, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
-        ("8002210121997", "10003315", "EXTRAVERGINE", "SAGRA GRAND EXV BOT W12x750ML  IT", "Ex.v. Sagra Grandulivo 0,75", 0.75, 7.50, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
-        ("8002210127197", "10003316", "EXTRAVERGINE", "SAGRA EXV 100%I BSA BOT W12x 750ML IT", "Ex.v. Sagra Bassa Acidità 100% ITA 0,75", 0.75, 11.25, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
-        ("8002210133792", "10003317", "EXTRAVERGINE", "SAGRA EXV 100% I BOT W 12x750ML IT", "Ex.v. Sagra 100% Italiano 0,75", 0.75, 11.25, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
-        ("8002210131815", "10003319", "EXTRAVERGINE", "SAGRA EXV 100%I BIO BOT W12x750ML IT", "Ex.v. Sagra Biologico 100% ITA  0,75", 0.75, 11.25, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
-        ("8002210130814", "60000444", "EXTRAVERGINE", "SAGRA EXV SPRAY C6x200ML ALLUMINIO IT", "Ex.v. Sagra Spray ml.200", 0.2, 2.00, "Spray Lt 0,20", 6, 49, 6, 294, 14, 9),
-        ("8002210124387", "10003061", "EXTRAVERGINE", "SAGRA PROF EXV PET T6x2L IT", "Ex.v. Sagra Prof lt.2", 2.0, 20.00, "Pet.Lt 2", 6, 13, 4, 52, 14, 9),
-        ("8002210131620", "10002724", "EXTRAVERGINE", "FBERIO EXV BOT W12x1L CLASS IT", "Ex.v. Filippo Berio Classico lt.1", 1.0, 12.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
-        ("8002210131644", "10002725", "EXTRAVERGINE", "FBERIO EXV BOT W12x1L BSA IT", "Ex.v. Filippo Berio Bassa Acidità lt.1", 1.0, 17.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
-        ("8002210131705", "10002726", "EXTRAVERGINE", "FBERIO EXV 100%I BOT W12x1L IT", "Ex.v. Filippo Berio 100% Italiano lt.1", 1.0, 18.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
-        ("8002210131767", "10002765", "EXTRAVERGINE", "FBERIO EXV BOT W12x750ML CLASS IT", "Ex.v. Filippo Berio Classico lt.0,75", 0.75, 12.00, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
-        ("8002210131668", "10002746", "EXTRAVERGINE", "FBERIO EXV BSA BOT W12x750ML IT", "Ex.v. Filippo Berio Bassa Acidità lt.0,75", 0.75, 17.00, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
-        ("8002210131804", "10002768", "EXTRAVERGINE", "FBERIO EXV 100%I BOT W12x750ML IT", "Ex.v. Filippo Berio 100% Italiano lt.0,75", 0.75, 18.00, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
-        ("8002210133013", "10003200", "EXTRAVERGINE", "FB R.O. EXV BIO 100%IT MB BOT W12X750 IT", "Ex.v. Filippo Berio Riserva Oro lt.0,75", 0.75, 19.00, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
-        ("8002210121461", "60000544", "EXTRAVERGINE", "EX.V. BUSTINA 10mlx250 FILIPPO BERIO ITA", "Ex.v. Filippo Berio Bustina ml.10", 0.01, 0.12, "bust lt 0,01", 250, 20, 5, 100, 14, 9),
-        ("8002210126572", "10003240", "OLIVA", "SAGRA OOL PUR R-PET V12X750ML CLASS IT", "Oliva Sagra RPET lt.0,75 PET", 0.75, 8.00, "Pet.Lt 0,75", 12, 12, 5, 60, 18, 12),
-        ("8002210133853", "10003241", "OLIVA", "SAGRA OOL PUR R-PET V12X750ML CLASS IT", "Oliva Sagra lt.0,75", 0.75, 8.00, "Pet.Lt 0,75", 12, 12, 5, 60, 18, 12),
-        ("8002210001305", "10002717", "OLIVA", "SAGRA OOL BOT W12x1L CLASS", "Oliva Sagra lt.1", 1.0, 8.00, "Bott.Lt 1", 12, 8, 5, 40, 18, 12),
-        ("8002210128453", "10002718", "OLIVA", "SAGRA GRAND OOL BOT W12x1L", "Oliva Sagra Grandulivo lt.1", 1.0, 8.00, "Bott.Lt 1", 12, 8, 5, 40, 18, 12),
-        ("8002210126176", "10003288", "OLIVA", "SAGRA OOL PUR R-PET T6X1.5L IT", "Oliva Sagra lt.1,5", 1.5, 12.00, "Pet.Lt 1,5", 6, 16, 4, 64, 18, 12),
-        ("8002210119567", "10000537", "OLIVA", "SAGRA PROF. OOL PUR PET C2x5L IT", "Oliva Sagra Prof Lt.5", 5.0, 40.00, "Pet.Lt 5", 2, 17, 4, 68, 18, 12),
-        ("8002210132436", "10002965", "OLIVA", "FBERIO OOL PUR BOT V6X500ML IT", "Oliva Filippo Berio lt.0,50", 0.5, 4.11, "Bott.Lt 0,5", 6, 30, 6, 180, 18, 12),
-        ("8002210131729", "10002727", "OLIVA", "FBERIO OOL PUR BOT W12x1L IT", "Oliva Filippo Berio lt.1", 1.0, 7.75, "Bott.Lt 1", 12, 8, 5, 40, 18, 12),
-        ("8002210131781", "10002766", "OLIVA", "FBERIO OOL PUR BOT W12x750ML IT", "Oliva Filippo Berio lt.0,75", 0.75, 5.97, "Bott.Lt 0,75", 12, 12, 5, 60, 18, 12),
-        ("8002210122307", "10000922", "OLIVA", "FBERIO OOL PUR LAT V8x1L IT", "Oliva Filippo Berio Latta lt.1", 1.0, 8.10, "Latta lt 1", 8, 12, 5, 60, 18, 12),
-        ("8002210111486", "10003307", "SEMI", "SAGRA SEM MAIS PET V12x1L IT", "Mais Sagra lt.1", 1.0, 2.00, "Pet.Lt 1", 12, 12, 5, 60, 18, 12),
-        ("8002210127067", "10003286", "SEMI", "SAGRA SEM MAIS PET T6x1.5L IT", "Mais Sagrì lt.1,5", 1.5, 3.00, "Pet.Lt 1,5", 6, 16, 4, 64, 18, 12),
-        ("8002210112889", "10003089", "SEMI", "SAGRA SEM MAIS PET T6x2L IT", "Mais Sagra lt.2", 2.0, 4.00, "Pet.Lt 2", 6, 13, 4, 52, 18, 12),
-        ("8002210000551", "10003311", "SEMI", "SAGRA SEM ARACHIDE PET V12x1L IT", "Arachide Sagra lt.1", 1.0, 3.00, "Pet.Lt 1", 12, 12, 5, 60, 18, 12),
-        ("8002210126916", "10003284", "SEMI", "SAGRI SEM ARACHIDE PET T6x1.5L IT", "Arachide Sagrì lt.1,5", 1.5, 4.50, "Pet.Lt 1,5", 6, 16, 4, 64, 18, 12),
-        ("8002210112865", "10003086", "SEMI", "SAGRA SEM ARACHIDE PET T6x2L IT", "Arachide Sagra lt.2", 2.0, 6.00, "Pet.Lt 2", 6, 13, 4, 52, 18, 12),
-        ("8002210116160", "10000326", "SEMI", "SAGRA PROF SEM ARACHIDE PET C2x5L IT", "Arachide Sagra Prof. Lt.5", 5.0, 15.00, "Pet lt 5", 2, 17, 4, 68, 18, 12),
-        ("8002210111905", "10003310", "SEMI", "SAGRA SEM GIRAS PET V12x1L IT", "Girasole Sagra lt.1", 1.0, 2.20, "Pet.Lt 1", 12, 12, 5, 60, 18, 12),
-        ("8002210126817", "10003287", "SEMI", "SAGRI SEM GIRAS PET T6x1.5L IT", "Girasole Sagrì lt.1,5", 1.5, 3.30, "Pet.Lt 1,5", 6, 16, 4, 64, 18, 12),
-        ("8002210113107", "10003087", "SEMI", "SAGRA SEM GIRAS PET T6x2L IT", "Girasole Sagra lt.2", 2.0, 4.40, "Pet.Lt 2", 6, 13, 4, 52, 18, 12),
-        ("8002210115453", "10003062", "SEMI", "SAGRA PROF SEM GIRAS PET C2x5L IT", "Girasole Sagra Prof Lt.5", 5.0, 11.00, "Pet lt 5", 2, 17, 4, 68, 18, 12),
-        ("8002210111295", "10002933", "SEMI", "SAGRA FRIMX SEM FRITT PET V12x1L NOP IT", "Frimax Sagra lt.1", 1.0, 2.25, "Pet Lt 1", 12, 12, 5, 60, 18, 12),
-        ("8002210126893", "10003285", "SEMI", "SAGRI SEM FRITT PET T6x1.5L IT", "Frimax Sagrì lt.1,5", 1.5, 3.38, "Pet.Lt 1,5", 6, 16, 4, 64, 18, 12),
-        ("8002210112940", "10003085", "SEMI", "SAGRA FRIMX SEM FRITT PET T6x2L NOP IT", "Frimax Sagra lt.2", 2.0, 4.50, "Pet Lt 2", 6, 13, 4, 52, 18, 12),
-        ("8002210115484", "10002644", "SEMI", "SAGRA FRIMX SEM FRITT PET C2x5L NOP IT", "Frimax Sagra lt.5", 5.0, 11.25, "Pet Lt 5", 2, 17, 4, 68, 18, 12),
-        ("8002210134140", "10003327", "SEMI", "GRAZIA SEM GIRAS LAT 1x20L IT", "Frimax Spray ml.200", 0.2, 0.45, "Spray Lt 0,20", 6, 49, 6, 294, 18, 12),
-        ("8002210127401", "10003309", "SEMI", "SAGRA SEM GIRAS AO PET V12x1L IT", "Girasole Alto Oleico Sagra lt.1", 1.0, 2.80, "Pet.Lt 1", 12, 12, 5, 60, 18, 12),
-        ("8002210126336", "10003063", "SEMI", "SAGRA PROF SEM GIRAS AO PET C2x5L IT", "Girasole Alto Oleico Sagra Prof lt.5", 5.0, 14.00, "Pet lt 5", 2, 17, 4, 68, 18, 12),
-        ("8002210129290", "10003312", "SEMI", "SAGRA SEM VINACC PET V12x1L IT", "Vinacciolo Sagra lt.1", 1.0, 5.00, "Pet.Lt 1", 12, 12, 5, 60, 18, 12),
-        ("8002210130289", "10003082", "EXTRAVERGINE", "FBERIO EXV CLASS MB BOT V6x250ML IT", "Ex.v. F.Berio Anti Rab Classico lt.0,25", 0.25, 2.50, "Vetro lt 0,25", 6, 49, 5, 245, 14, 9),
-        ("8002210130210", "10003081", "EXTRAVERGINE", "FBERIO EXV 100%I MB BOT V6x250ML IT", "Ex.v. F.Berio Anti Rab 100% ITA lt.0,25", 0.25, 3.00, "Vetro lt 0,25", 6, 49, 5, 245, 14, 9),
-        ("8002210130340", "10003091", "EXTRAVERGINE", "FBERIO EXV CLASS MB BOT V6x500ML IT", "Ex.v. F.Berio Anti Rab Classico lt.0,50", 0.5, 4.30, "Vetro lt 0,50", 6, 31, 5, 155, 14, 9),
-        ("8002210130302", "10003079", "EXTRAVERGINE", "FBERIO EXV 100%I MB BOT V6x500ML IT", "Ex.v. F.Berio Anti Rab 100% ITA lt.0,50", 0.5, 4.80, "Vetro lt 0,50", 6, 31, 5, 155, 14, 9),
-        ("8002210132573", "10003072", "EXTRAVERGINE", "FBERIO EXV BOT V6x500ML TOSC IT", "Ex.v. F.Berio Toscano lt.0,50", 0.5, 10.00, "Vetro lt 0,50", 6, 31, 5, 155, 18, 12),
-        ("8002210130234", "60000591", "EXTRAVERGINE", "FBERIO EXV DRES BOT V6x250ML PEP TE IT", "Ex.v. F.Berio Peperoncino lt.0,25", 0.25, 3.50, "Vetro lt 0,25", 6, 49, 5, 245, 24, 16),
-        ("8002210130791", "60000590", "ACETO", "FBERIO ACE BALS BOT V6x250ML IT", "Aceto Balsamico F.Berio lt.0,25", 0.25, 2.00, "Vetro lt 0,25", 6, 48, 6, 288, 61, 41),
-        ("8002210130197", "60000589", "ACETO", "FBERIO ACE BALS BOT V6x500ML IT", "Aceto Balsamico F.Berio lt.0,50", 0.5, 2.10, "Vetro lt 0,50", 6, 31, 5, 155, 61, 41)
+    prodotti_olio_spa = [
+        ("8002210113110", "10003713", "EXTRAVERGINE", "TATTICO EXV BOT W12x1L CLASS IT", "Ex.v. Tattico Classico lt.1", 1.0, 10.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210135441", "10004256", "EXTRAVERGINE", "TATTICO EXV 100%R-PET V12x750ML IT", "Ex.v. Tattico lt.0,75 PET", 0.75, 7.50, "Pet.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210117090", "10003718", "EXTRAVERGINE", "TATTICO GRAND EXV BOT W12x1L", "Ex.v. Tattico Grandulivo lt.1", 1.0, 10.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210129565", "10003722", "EXTRAVERGINE", "TATTICO T.VIVE EXV BOT W 12x1L", "Ex.v. Tattico Terre Vive lt.1", 1.0, 10.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210121547", "10001540", "EXTRAVERGINE", "TATTICO PROF. EXV PET C2x5L IT", "Ex.v. Tattico Prof Lt.5", 5.0, 50.00, "Pet lt 5", 2, 17, 4, 68, 14, 9),
+        ("8002210114832", "10003719", "EXTRAVERGINE", "TATTICO EXV 100%I BSA BOT W12x1L IT", "Ex.v. Tattico Bassa Acidità 100% ITA lt.1", 1.0, 15.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210129431", "10003721", "EXTRAVERGINE", "TATTICO EXV 100%I BOT W 12x1L", "Ex.v. Tattico 100% Italiano lt.1", 1.0, 15.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210130293", "10003727", "EXTRAVERGINE", "TATTICO EXV 100%I BIO BOT V12x1L IT", "Ex.v. Tattico Biologico 100% ITA lt.1", 1.0, 15.00, "Vetro lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210130256", "10003755", "EXTRAVERGINE", "TATTICO EXV BOT W12x750ML CLASS IT", "Ex.v. Tattico Classico lt.0,75", 0.75, 7.50, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210124006", "10004324", "EXTRAVERGINE", "TATTICO GRAND EXV BOT W12x750ML  IT", "Ex.v. Tattico Grandulivo 0,75", 0.75, 7.50, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210129207", "10004326", "EXTRAVERGINE", "TATTICO EXV 100%I BSA BOT W12x 750ML IT", "Ex.v. Tattico Bassa Acidità 100% ITA 0,75", 0.75, 11.25, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210135803", "10004328", "EXTRAVERGINE", "TATTICO EXV 100% I BOT W 12x750ML IT", "Ex.v. Tattico 100% Italiano 0,75", 0.75, 11.25, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210133827", "10004331", "EXTRAVERGINE", "TATTICO EXV 100%I BIO BOT W12x750ML IT", "Ex.v. Tattico Biologico 100% ITA  0,75", 0.75, 11.25, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210132827", "60001457", "EXTRAVERGINE", "TATTICO EXV SPRAY C6x200ML ALLUMINIO IT", "Ex.v. Tattico Spray ml.200", 0.2, 2.00, "Spray Lt 0,20", 6, 49, 6, 294, 14, 9),
+        ("8002210126401", "10004075", "EXTRAVERGINE", "TATTICO PROF EXV PET T6x2L IT", "Ex.v. Tattico Prof lt.2", 2.0, 20.00, "Pet.Lt 2", 6, 13, 4, 52, 14, 9),
+        ("8002210133635", "10003739", "EXTRAVERGINE", "IL PRESTIGIOSO EXV BOT W12x1L CLASS IT", "Ex.v. Il prestigioso Classico lt.1", 1.0, 12.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210133660", "10003741", "EXTRAVERGINE", "IL PRESTIGIOSO EXV BOT W12x1L BSA IT", "Ex.v. Il prestigioso Bassa Acidità lt.1", 1.0, 17.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210133722", "10003743", "EXTRAVERGINE", "IL PRESTIGIOSO EXV 100%I BOT W12x1L IT", "Ex.v. Il prestigioso 100% Italiano lt.1", 1.0, 18.00, "Bott.Lt 1", 12, 8, 5, 40, 14, 9),
+        ("8002210133785", "10003783", "EXTRAVERGINE", "IL PRESTIGIOSO EXV BOT W12x750ML CLASS IT", "Ex.v. Il prestigioso Classico lt.0,75", 0.75, 12.00, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210133687", "10003765", "EXTRAVERGINE", "IL PRESTIGIOSO EXV BSA BOT W12x750ML IT", "Ex.v. Il prestigioso Bassa Acidità lt.0,75", 0.75, 17.00, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210133824", "10003788", "EXTRAVERGINE", "IL PRESTIGIOSO EXV 100%I BOT W12x750ML IT", "Ex.v. Il prestigioso 100% Italiano lt.0,75", 0.75, 18.00, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210135034", "10004221", "EXTRAVERGINE", "IL PRESTIGIOSO R.O. EXV BIO 100%IT MB BOT W12X750 IT", "Ex.v. Il prestigioso Riserva Oro lt.0,75", 0.75, 19.00, "Bott.Lt 0,75", 12, 12, 5, 60, 14, 9),
+        ("8002210123483", "60001566", "EXTRAVERGINE", "EX.V. BUSTINA 10mlx250 IL PRESTIGIOSO ITA", "Ex.v. Il prestigioso Bustina ml.10", 0.01, 0.12, "bust lt 0,01", 250, 20, 5, 100, 14, 9),
+        ("8002210128595", "10004263", "OLIVA", "TATTICO OOL PUR R-PET V12X750ML CLASS IT", "Oliva Tattico RPET lt.0,75 PET", 0.75, 8.00, "Pet.Lt 0,75", 12, 12, 5, 60, 18, 12),
+        ("8002210135877", "10004265", "OLIVA", "TATTICO OOL PUR R-PET V12X750ML CLASS IT", "Oliva Tattico lt.0,75", 0.75, 8.00, "Pet.Lt 0,75", 12, 12, 5, 60, 18, 12),
+        ("8002210003330", "10003742", "OLIVA", "TATTICO OOL BOT W12x1L CLASS", "Oliva Tattico lt.1", 1.0, 8.00, "Bott.Lt 1", 12, 8, 5, 40, 18, 12),
+        ("8002210130479", "10003744", "OLIVA", "TATTICO GRAND OOL BOT W12x1L", "Oliva Tattico Grandulivo lt.1", 1.0, 8.00, "Bott.Lt 1", 12, 8, 5, 40, 18, 12),
+        ("8002210128203", "10004315", "OLIVA", "TATTICO OOL PUR R-PET T6X1.5L IT", "Oliva Tattico lt.1,5", 1.5, 12.00, "Pet.Lt 1,5", 6, 16, 4, 64, 18, 12),
+        ("8002210121595", "10001565", "OLIVA", "TATTICO PROF. OOL PUR PET C2x5L IT", "Oliva Tattico Prof Lt.5", 5.0, 40.00, "Pet.Lt 5", 2, 17, 4, 68, 18, 12),
+        ("8002210134465", "10003994", "OLIVA", "IL PRESTIGIOSO OOL PUR BOT V6X500ML IT", "Oliva Il prestigioso lt.0,50", 0.5, 4.11, "Bott.Lt 0,5", 6, 30, 6, 180, 18, 12),
+        ("8002210133759", "10003757", "OLIVA", "IL PRESTIGIOSO OOL PUR BOT W12x1L IT", "Oliva Il prestigioso lt.1", 1.0, 7.75, "Bott.Lt 1", 12, 8, 5, 40, 18, 12),
+        ("8002210133812", "10003797", "OLIVA", "IL PRESTIGIOSO OOL PUR BOT W12x750ML IT", "Oliva Il prestigioso lt.0,75", 0.75, 5.97, "Bott.Lt 0,75", 12, 12, 5, 60, 18, 12),
+        ("8002210124339", "10001954", "OLIVA", "IL PRESTIGIOSO OOL PUR LAT V8x1L IT", "Oliva Il prestigioso Latta lt.1", 1.0, 8.10, "Latta lt 1", 8, 12, 5, 60, 18, 12),
+        ("8002210113519", "10004340", "SEMI", "TATTICO SEM MAIS PET V12x1L IT", "Mais Tattico lt.1", 1.0, 2.00, "Pet.Lt 1", 12, 12, 5, 60, 18, 12),
+        ("8002210129101", "10004320", "SEMI", "TATTICO SEM MAIS PET T6x1.5L IT", "Mais Tattico lt.1,5", 1.5, 3.00, "Pet.Lt 1,5", 6, 16, 4, 64, 18, 12),
+        ("8002210114924", "10004124", "SEMI", "TATTICO SEM MAIS PET T6x2L IT", "Mais Tattico lt.2", 2.0, 4.00, "Pet.Lt 2", 6, 13, 4, 52, 18, 12),
+        ("8002210002587", "10004347", "SEMI", "TATTICO SEM ARACHIDE PET V12x1L IT", "Arachide Tattico lt.1", 1.0, 3.00, "Pet.Lt 1", 12, 12, 5, 60, 18, 12),
+        ("8002210128953", "10004321", "SEMI", "TATTICO SEM ARACHIDE PET T6x1.5L IT", "Arachide Tattico lt.1,5", 1.5, 4.50, "Pet.Lt 1,5", 6, 16, 4, 64, 18, 12),
+        ("8002210114903", "10004124", "SEMI", "TATTICO SEM ARACHIDE PET T6x2L IT", "Arachide Tattico lt.2", 2.0, 6.00, "Pet.Lt 2", 6, 13, 4, 52, 18, 12),
+        ("8002210118199", "10001365", "SEMI", "TATTICO PROF SEM ARACHIDE PET C2x5L IT", "Arachide Tattico Prof. Lt.5", 5.0, 15.00, "Pet lt 5", 2, 17, 4, 68, 18, 12),
+        ("8002210113945", "10004350", "SEMI", "TATTICO SEM GIRAS PET V12x1L IT", "Girasole Tattico lt.1", 1.0, 2.20, "Pet.Lt 1", 12, 12, 5, 60, 18, 12),
+        ("8002210128858", "10004328", "SEMI", "TATTICO SEM GIRAS PET T6x1.5L IT", "Girasole Tattico lt.1,5", 1.5, 3.30, "Pet.Lt 1,5", 6, 16, 4, 64, 18, 12),
+        ("8002210115149", "10004129", "SEMI", "TATTICO SEM GIRAS PET T6x2L IT", "Girasole Tattico lt.2", 2.0, 4.40, "Pet.Lt 2", 6, 13, 4, 52, 18, 12),
+        ("8002210117496", "10004105", "SEMI", "TATTICO PROF SEM GIRAS PET C2x5L IT", "Girasole Tattico Prof Lt.5", 5.0, 11.00, "Pet lt 5", 2, 17, 4, 68, 18, 12),
+        ("8002210113339", "10003977", "SEMI", "TATTICO FRIMX SEM FRITT PET V12x1L NOP IT", "Frimax Tattico lt.1", 1.0, 2.25, "Pet Lt 1", 12, 12, 5, 60, 18, 12),
+        ("8002210128938", "10004330", "SEMI", "TATTICO SEM FRITT PET T6x1.5L IT", "Frimax Tattico lt.1,5", 1.5, 3.38, "Pet.Lt 1,5", 6, 16, 4, 64, 18, 12),
+        ("8002210114986", "10004131", "SEMI", "TATTICO FRIMX SEM FRITT PET T6x2L NOP IT", "Frimax Tattico lt.2", 2.0, 4.50, "Pet Lt 2", 6, 13, 4, 52, 18, 12),
+        ("8002210117531", "10003691", "SEMI", "TATTICO FRIMX SEM FRITT PET C2x5L NOP IT", "Frimax Tattico lt.5", 5.0, 11.25, "Pet Lt 5", 2, 17, 4, 68, 18, 12),
+        ("8002210136188", "10004375", "SEMI", "GRAZIA SEM GIRAS LAT 1x20L IT", "Frimax Spray ml.200", 0.2, 0.45, "Spray Lt 0,20", 6, 49, 6, 294, 18, 12),
+        ("8002210129450", "10004358", "SEMI", "TATTICO SEM GIRAS AO PET V12x1L IT", "Girasole Alto Oleico Tattico lt.1", 1.0, 2.80, "Pet.Lt 1", 12, 12, 5, 60, 18, 12),
+        ("8002210128386", "10004113", "SEMI", "TATTICO PROF SEM GIRAS AO PET C2x5L IT", "Girasole Alto Oleico Tattico Prof lt.5", 5.0, 14.00, "Pet lt 5", 2, 17, 4, 68, 18, 12),
+        ("8002210131341", "10004363", "SEMI", "TATTICO SEM VINACC PET V12x1L IT", "Vinacciolo Tattico lt.1", 1.0, 5.00, "Pet.Lt 1", 12, 12, 5, 60, 18, 12),
+        ("8002210132341", "10004134", "EXTRAVERGINE", "IL PRESTIGIOSO EXV CLASS MB BOT V6x250ML IT", "Ex.v. Il prestigioso Anti Rab Classico lt.0,25", 0.25, 2.50, "Vetro lt 0,25", 6, 49, 5, 245, 14, 9),
+        ("8002210132263", "10004134", "EXTRAVERGINE", "IL PRESTIGIOSO EXV 100%I MB BOT V6x250ML IT", "Ex.v. Il prestigioso Anti Rab 100% ITA lt.0,25", 0.25, 3.00, "Vetro lt 0,25", 6, 49, 5, 245, 14, 9),
+        ("8002210132394", "10004145", "EXTRAVERGINE", "IL PRESTIGIOSO EXV CLASS MB BOT V6x500ML IT", "Ex.v. Il prestigioso Anti Rab Classico lt.0,50", 0.5, 4.30, "Vetro lt 0,50", 6, 31, 5, 155, 14, 9),
+        ("8002210132357", "10004134", "EXTRAVERGINE", "IL PRESTIGIOSO EXV 100%I MB BOT V6x500ML IT", "Ex.v. Il prestigioso Anti Rab 100% ITA lt.0,50", 0.5, 4.80, "Vetro lt 0,50", 6, 31, 5, 155, 14, 9),
+        ("8002210134629", "10004128", "EXTRAVERGINE", "IL PRESTIGIOSO EXV BOT V6x500ML TOSC IT", "Ex.v. Il prestigioso Toscano lt.0,50", 0.5, 10.00, "Vetro lt 0,50", 6, 31, 5, 155, 18, 12),
+        ("8002210132291", "60001648", "EXTRAVERGINE", "IL PRESTIGIOSO EXV DRES BOT V6x250ML PEP TE IT", "Ex.v. Il prestigioso Peperoncino lt.0,25", 0.25, 3.50, "Vetro lt 0,25", 6, 49, 5, 245, 24, 16),
+        ("8002210132849", "60001648", "ACETO", "IL PRESTIGIOSO ACE BALS BOT V6x250ML IT", "Aceto Balsamico Il prestigioso lt.0,25", 0.25, 2.00, "Vetro lt 0,25", 6, 48, 6, 288, 61, 41),
+        ("8002210132256", "60001648", "ACETO", "IL PRESTIGIOSO ACE BALS BOT V6x500ML IT", "Aceto Balsamico Il prestigioso lt.0,50", 0.5, 2.10, "Vetro lt 0,50", 6, 31, 5, 155, 61, 41)
     ]
     
-    for p in prodotti_salov:
+    for p in prodotti_olio_spa:
         cursor.execute("""
         INSERT OR REPLACE INTO anagrafica_master (
             ean, codice_sap, tipo_olio, descrizione_sap, descrizione_commerciale, formato_lt, confezione,
@@ -543,103 +543,103 @@ def seed_baseline_data(conn):
         # Gruppo definisce S1=20% e S2=30%
         ('COOP ITALIA', '', '', 'GRUPPO', '', None, 20.0, 30.0, None, None, None, None, None, None, 1.5, 1.0, 14.0, 8.0, None, None, None, None),
         # Referenze integrano con S3 e S4 accumulandosi a S1 e S2 del Gruppo
-        ('COOP ITALIA', 'COOP ITALIA SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 66.00, None, None, 12.0, 5.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('COOP ITALIA', 'COOP ITALIA SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 60.80, None, None, 15.0, 0.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('COOP ITALIA', 'COOP ITALIA SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 43.20, None, None, 12.0, 0.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('COOP ITALIA', 'COOP ITALIA SOTTOGRUPPO', '', 'REFERENZA', '8002210133635', 66.00, None, None, 12.0, 5.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('COOP ITALIA', 'COOP ITALIA SOTTOGRUPPO', '', 'REFERENZA', '8002210113110', 60.80, None, None, 15.0, 0.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('COOP ITALIA', 'COOP ITALIA SOTTOGRUPPO', '', 'REFERENZA', '8002210003330', 43.20, None, None, 12.0, 0.0, None, None, None, None, None, None, None, None, None, None, None, None),
 
         # ESSELUNGA GRUPPO
         # Gruppo definisce S1=35% e S2=15%
         ('ESSELUNGA GRUPPO', '', '', 'GRUPPO', '', None, 35.0, 15.0, None, None, None, None, None, None, 1.2, 1.0, 12.0, 5.0, None, None, None, None),
         # Referenze integrano con S3 e S4 accumulandosi a S1 e S2 del Gruppo
-        ('ESSELUNGA GRUPPO', 'ESSELUNGA SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 40.00, None, None, 10.0, 7.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('ESSELUNGA GRUPPO', 'ESSELUNGA SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 38.00, None, None, 55.0, 0.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('ESSELUNGA GRUPPO', 'ESSELUNGA SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 24.00, None, None, 13.0, 0.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('ESSELUNGA GRUPPO', 'ESSELUNGA SOTTOGRUPPO', '', 'REFERENZA', '8002210133635', 40.00, None, None, 10.0, 7.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('ESSELUNGA GRUPPO', 'ESSELUNGA SOTTOGRUPPO', '', 'REFERENZA', '8002210113110', 38.00, None, None, 55.0, 0.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('ESSELUNGA GRUPPO', 'ESSELUNGA SOTTOGRUPPO', '', 'REFERENZA', '8002210003330', 24.00, None, None, 13.0, 0.0, None, None, None, None, None, None, None, None, None, None, None, None),
 
         # === INSERIMENTO DATI COMPLETI GRUPPO CONAD DA PDF ===
         # Regola generale di Gruppo CONAD
         ('CONAD', '', '', 'GRUPPO', '', None, 17.0, 18.0, None, None, None, None, None, None, 1.5, 1.0, 9.0, 11.0, None, None, None, None),
         
         # Referenze di Sottogruppo CONAD SOTTOGRUPPO
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 48.80, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210133440', 36.60, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210115088', 48.70, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210127562', 48.80, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210119543', 238.50, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210112827', 55.60, 33.0, 21.0, 22.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210127425', 53.70, 33.0, 21.0, 22.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210128286', 60.40, 33.0, 21.0, 22.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210128248', 45.20, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210127197', 52.30, 33.0, 21.0, 22.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210133792', 50.90, 33.0, 21.0, 22.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210130814', 30.60, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 51.70, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210131644', 59.50, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210131705', 57.90, 33.0, 21.0, 22.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210131767', 40.20, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210131668', 46.60, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210131804', 45.20, 33.0, 21.0, 22.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210133013', 57.40, 33.0, 21.0, 22.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210126572', 34.80, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210133853', 36.20, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 46.30, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210128453', 46.30, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210126176', 67.70, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210119567', 224.00, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210132436', 26.30, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210131729', 46.70, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210131781', 36.40, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210122307', 49.90, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210111486', 12.95, 44.0, 24.0, 33.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210127067', 19.50, 44.0, 26.0, 33.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210112889', 25.80, 44.0, 26.0, 33.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210000551', 14.15, 44.0, 24.0, 14.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210126916', 21.15, 44.0, 26.0, 14.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210112865', 28.20, 44.0, 26.0, 14.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210116160', 70.50, 44.0, 26.0, 14.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210111905', 12.70, 44.0, 24.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210126817', 18.80, 44.0, 26.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210113107', 25.00, 44.0, 26.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210115453', 62.50, 44.0, 26.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210111295', 13.10, 44.0, 24.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210126893', 19.25, 44.0, 26.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210112940', 25.60, 44.0, 26.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210115484', 64.00, 44.0, 26.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210134140', 20.00, 44.0, 26.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210127401', 20.00, 44.0, 24.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210126336', 95.00, 44.0, 26.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210129290', 25.30, 44.0, 24.0, None, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210130289', 21.50, 33.0, 21.0, 24.0, 30.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210130210', 21.80, 33.0, 21.0, 22.0, 30.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210130340', 32.20, 33.0, 21.0, 24.0, 30.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210130302', 34.30, 33.0, 21.0, 22.0, 30.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210132573', 67.00, 33.0, 21.0, 22.0, 30.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210130234', 22.70, 33.0, 21.0, None, 30.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210130791', 9.50, 33.0, 21.0, None, 30.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210130197', 11.80, 33.0, 21.0, None, 30.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210113110', 48.80, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210135441', 36.60, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210117090', 48.70, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210129565', 48.80, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210121547', 238.50, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210114832', 55.60, 33.0, 21.0, 22.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210129431', 53.70, 33.0, 21.0, 22.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210130293', 60.40, 33.0, 21.0, 22.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210130256', 45.20, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210129207', 52.30, 33.0, 21.0, 22.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210135803', 50.90, 33.0, 21.0, 22.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210132827', 30.60, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210133635', 51.70, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210133660', 59.50, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210133722', 57.90, 33.0, 21.0, 22.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210133785', 40.20, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210133687', 46.60, 33.0, 21.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210133824', 45.20, 33.0, 21.0, 22.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210135034', 57.40, 33.0, 21.0, 22.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210128595', 34.80, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210135877', 36.20, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210003330', 46.30, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210130479', 46.30, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210128203', 67.70, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210121595', 224.00, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210134465', 26.30, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210133759', 46.70, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210133812', 36.40, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210124339', 49.90, 33.0, 18.0, 24.0, 20.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210113519', 12.95, 44.0, 24.0, 33.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210129101', 19.50, 44.0, 26.0, 33.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210114924', 25.80, 44.0, 26.0, 33.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210002587', 14.15, 44.0, 24.0, 14.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210128953', 21.15, 44.0, 26.0, 14.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210114903', 28.20, 44.0, 26.0, 14.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210118199', 70.50, 44.0, 26.0, 14.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210113945', 12.70, 44.0, 24.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210128858', 18.80, 44.0, 26.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210115149', 25.00, 44.0, 26.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210117496', 62.50, 44.0, 26.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210113339', 13.10, 44.0, 24.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210128938', 19.25, 44.0, 26.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210114986', 25.60, 44.0, 26.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210117531', 64.00, 44.0, 26.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210136188', 20.00, 44.0, 26.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210129450', 20.00, 44.0, 24.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210128386', 95.00, 44.0, 26.0, 40.0, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210131341', 25.30, 44.0, 24.0, None, 25.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210132341', 21.50, 33.0, 21.0, 24.0, 30.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210132263', 21.80, 33.0, 21.0, 22.0, 30.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210132394', 32.20, 33.0, 21.0, 24.0, 30.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210132357', 34.30, 33.0, 21.0, 22.0, 30.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210134629', 67.00, 33.0, 21.0, 22.0, 30.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210132291', 22.70, 33.0, 21.0, None, 30.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210132849', 9.50, 33.0, 21.0, None, 30.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CONAD', 'CONAD SOTTOGRUPPO', '', 'REFERENZA', '8002210132256', 11.80, 33.0, 21.0, None, 30.0, None, None, None, None, None, None, None, None, None, None, None, None),
 
         # SELEX GRUPPO
         # Gruppo definisce S1=17% e S2=18%
         ('SELEX GRUPPO', '', '', 'GRUPPO', '', None, 17.0, 18.0, None, None, None, None, None, None, 1.5, 1.0, 9.0, 11.0, None, None, None, None),
         # Referenze integrano con S3 e S4 accumulandosi a S1 e S2 del Gruppo
-        ('SELEX GRUPPO', 'SELEX SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 50.00, None, None, 12.0, 9.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('SELEX GRUPPO', 'SELEX SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 44.00, None, None, 11.0, 4.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('SELEX GRUPPO', 'SELEX SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 30.00, None, None, 10.0, 4.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('SELEX GRUPPO', 'SELEX SOTTOGRUPPO', '', 'REFERENZA', '8002210133635', 50.00, None, None, 12.0, 9.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('SELEX GRUPPO', 'SELEX SOTTOGRUPPO', '', 'REFERENZA', '8002210113110', 44.00, None, None, 11.0, 4.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('SELEX GRUPPO', 'SELEX SOTTOGRUPPO', '', 'REFERENZA', '8002210003330', 30.00, None, None, 10.0, 4.0, None, None, None, None, None, None, None, None, None, None, None, None),
         
         # PAM GRUPPO
         # Gruppo definisce S1=15% e S2=20%
         ('PAM GRUPPO', '', '', 'GRUPPO', '', None, 15.0, 20.0, None, None, None, None, None, None, 1.4, 1.0, 11.0, 6.0, None, None, None, None),
         # Referenze integrano con S3 e S4 accumulandosi a S1 e S2 del Gruppo
-        ('PAM GRUPPO', 'PAM SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 52.00, None, None, 14.0, 6.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('PAM GRUPPO', 'PAM SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 48.00, None, None, 13.0, 3.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('PAM GRUPPO', 'PAM SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 32.00, None, None, 9.0, 3.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('PAM GRUPPO', 'PAM SOTTOGRUPPO', '', 'REFERENZA', '8002210133635', 52.00, None, None, 14.0, 6.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('PAM GRUPPO', 'PAM SOTTOGRUPPO', '', 'REFERENZA', '8002210113110', 48.00, None, None, 13.0, 3.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('PAM GRUPPO', 'PAM SOTTOGRUPPO', '', 'REFERENZA', '8002210003330', 32.00, None, None, 9.0, 3.0, None, None, None, None, None, None, None, None, None, None, None, None),
 
         # CRAI GRUPPO
         # Gruppo definisce S1=12% e S2=25%
         ('CRAI GRUPPO', '', '', 'GRUPPO', '', None, 12.0, 25.0, None, None, None, None, None, None, 2.0, 1.0, 7.0, 12.0, None, None, None, None),
         # Referenze integrano con S3 e S4 accumulandosi a S1 e S2 del Gruppo
-        ('CRAI GRUPPO', 'CRAI SOTTOGRUPPO', '', 'REFERENZA', '8002210131620', 56.00, None, None, 15.0, 8.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CRAI GRUPPO', 'CRAI SOTTOGRUPPO', '', 'REFERENZA', '8002210111110', 50.00, None, None, 12.0, 5.0, None, None, None, None, None, None, None, None, None, None, None, None),
-        ('CRAI GRUPPO', 'CRAI SOTTOGRUPPO', '', 'REFERENZA', '8002210001305', 35.00, None, None, 11.0, 5.0, None, None, None, None, None, None, None, None, None, None, None, None)
+        ('CRAI GRUPPO', 'CRAI SOTTOGRUPPO', '', 'REFERENZA', '8002210133635', 56.00, None, None, 15.0, 8.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CRAI GRUPPO', 'CRAI SOTTOGRUPPO', '', 'REFERENZA', '8002210113110', 50.00, None, None, 12.0, 5.0, None, None, None, None, None, None, None, None, None, None, None, None),
+        ('CRAI GRUPPO', 'CRAI SOTTOGRUPPO', '', 'REFERENZA', '8002210003330', 35.00, None, None, 11.0, 5.0, None, None, None, None, None, None, None, None, None, None, None, None)
     ]
     
     cursor.executemany("""
@@ -727,7 +727,7 @@ st.sidebar.markdown("""
 # ==========================================
 if menu == "Simulatore Offerte":
     conn = sqlite3.connect(DB_FILE)
-    st.markdown("## Commerciale Salov - Simulatore")
+    st.markdown("## Commerciale Olio S.p.A. - Simulatore")
     
     cursor = conn.cursor()
     cursor.execute("SELECT DISTINCT gruppo_macro FROM struttura_gdo WHERE attivo=1 ORDER BY gruppo_macro")
@@ -828,7 +828,7 @@ if menu == "Simulatore Offerte":
                     break
                     
         with col_ctx4:
-            prodotto_scelto = st.selectbox("4. Referenza Salov", list(prodotti_dict.keys()), key="widget_prodotto")
+            prodotto_scelto = st.selectbox("4. Referenza Olio S.p.A.", list(prodotti_dict.keys()), key="widget_prodotto")
 
     ean, tipo_olio, min_net_net_g, codice_sap, formato_lt, pezzi_cartone, cartoni_strato, strati_pallet, cartoni_pallet = prodotti_dict[prodotto_scelto]
     
@@ -1140,7 +1140,7 @@ if menu == "Simulatore Offerte":
                 thin_border = Border(left=Side(style='thin', color='DDDDDD'), right=Side(style='thin', color='DDDDDD'), top=Side(style='thin', color='DDDDDD'), bottom=Side(style='thin', color='DDDDDD'))
                 
                 ws.merge_cells('A1:D1')
-                ws['A1'] = "SALOV S.p.A. - SCHEDA PROPOSTA COMMERCIALE"
+                ws['A1'] = "Olio S.p.A. - SCHEDA PROPOSTA COMMERCIALE"
                 ws['A1'].font = font_title
                 ws['A1'].fill = fill_header
                 ws['A1'].alignment = Alignment(horizontal="center", vertical="center")
@@ -1238,6 +1238,7 @@ if menu == "Simulatore Offerte":
                     ws.cell(row=row_idx, column=2, value=float(net_net_post_promo)).font = font_value
                     ws.cell(row=row_idx, column=2).number_format = '#,##0.000 €'
                     ws.cell(row=row_idx, column=3, value=f"-{float(impatto_unitario_extra):.3f} €/Pz").font = font_value
+
                     row_idx += 1
                     
                 ws.cell(row=row_idx+1, column=1, value="SOGLIA MINIMA AM (G):").font = font_label
@@ -3235,7 +3236,7 @@ elif menu == "Report Sintetico":
 # ==========================================
 else:
     st.title("📚 Manuale Operativo e Guida all'Uso")
-    st.markdown("### Benvenuto in 'Bunker Commerciale - Salov'")
+    st.markdown("### Benvenuto in 'Bunker Commerciale - Olio S.p.A.'")
     st.markdown("""
     Questo programma è il tuo "navigatore" per le trattative commerciali. Ti aiuta a calcolare esattamente quanto 
     guadagnerà l'azienda (Margine Netto) dopo aver concesso sconti, premi e volantini alla GDO, evitandoti di scendere sotto i limiti di sicurezza.
@@ -3301,7 +3302,7 @@ else:
         Ecco come affrontare una simulazione tipica passo dopo passo:
 
         **Passo 1: Il Contesto (Con chi sto parlando?)**
-        *   **Esempio:** Ti chiama il Buyer di *Conad Adriatico*. Tu selezioni nel menu l'Insegna *Conad Adriatico* e la Referenza *Extravergine Sagra Classico 1L*.
+        *   **Esempio:** Ti chiama il Buyer di *Conad Adriatico*. Tu selezioni nel menu l'Insegna *Conad Adriatico* e la Referenza *Extravergine Tattico Classico 1L*.
         *   In un decimo di secondo, il sistema carica il Listino Base (es. 10,00 €), eredita tutti gli sconti contrattuali della capogruppo *Conad* (S1, S2, PFA, ecc.) e recupera il Limite Aziendale di Sopravvivenza (Floor), mettiamo che sia **4,00 €**.
         *   *Nota visiva:* Sulla destra vedrai subito il Badge che ti dice da dove sta prendendo i dati (es. *SOTTOGRUPPO* o *REFERENZA*).
 
